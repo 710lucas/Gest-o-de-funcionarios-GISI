@@ -6,7 +6,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, X
 
 const StatCard = ({ title, value, icon: Icon, color, isMobile }) => (
   <div className="stat-card" style={{ padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', backgroundColor: '#fff', display: 'flex', alignItems: 'center', gap: '1rem', transition: 'transform 0.2s', width: 'fit-content', flexGrow: '1' }}>
-    <div style={{ backgroundColor: `${color}20`, padding: isMobile ? '0.75rem' : '1rem', borderRadius: '50%' }}>
+    <div style={{ backgroundColor: `${color}20`, padding: isMobile ? '0.75rem' : '1rem', borderRadius: '50%', display : 'flex' }}>
       <Icon size={isMobile ? 24 : 32} color={color} />
     </div>
     <div style={{ flex: 1, minWidth: 0 }}>
