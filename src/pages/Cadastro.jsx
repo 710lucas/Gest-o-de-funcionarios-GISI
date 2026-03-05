@@ -23,7 +23,6 @@ const Cadastro = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Simples validação
         if (!formData.nome || !formData.cargo || !formData.salario) {
             alert('Preencha os campos obrigatórios!');
             return;

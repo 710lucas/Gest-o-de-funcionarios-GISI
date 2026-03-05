@@ -1,39 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import FuncionarioModal from '../components/FuncionarioModal';
-
 const ListaFuncionarios = () => {
   const [funcionarios, setFuncionarios] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedFuncionario, setSelectedFuncionario] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Carrega e atualiza a lista
   const loadData = () => {
     const data = api.getAll();
     setFuncionarios(data);
   };
-
   useEffect(() => {
     loadData();
   }, []);
-
   const handleOpenModal = (funcionario) => {
     setSelectedFuncionario(funcionario);
     setModalOpen(true);
   };
-
   const handleCloseModal = () => {
     setModalOpen(false);
     setSelectedFuncionario(null);
   };
-
   const handleSave = (updatedFuncionario) => {
     api.update(updatedFuncionario.id, updatedFuncionario);
     loadData();
     handleCloseModal();
   };
-
   const handleDelete = (id) => {
     if (window.confirm('Tem certeza que deseja excluir este funcionário?')) {
       api.delete(id);
@@ -41,12 +33,10 @@ const ListaFuncionarios = () => {
       handleCloseModal();
     }
   };
-
   const filteredFuncionarios = funcionarios.filter(f => 
     f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   return (
     <div className="container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -60,7 +50,6 @@ const ListaFuncionarios = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
-
       <div className="table-container">
         <table className="table">
           <thead>
@@ -100,7 +89,6 @@ const ListaFuncionarios = () => {
           </tbody>
         </table>
       </div>
-
       {modalOpen && (
         <FuncionarioModal
           isOpen={modalOpen}
@@ -113,5 +101,4 @@ const ListaFuncionarios = () => {
     </div>
   );
 };
-
 export default ListaFuncionarios;

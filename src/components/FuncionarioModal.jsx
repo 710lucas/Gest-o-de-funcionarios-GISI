@@ -1,30 +1,23 @@
 import React, { useState } from 'react';
-
 const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) => {
   const [formData, setFormData] = useState(funcionario || {});
   const [isEditing, setIsEditing] = useState(false);
-
-  // Atualiza o form ao abrir com dados diferentes
   React.useEffect(() => {
     if (funcionario) {
       setFormData(funcionario);
       setIsEditing(false);
     }
   }, [funcionario]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({ ...formData, id: funcionario.id });
     onClose();
   };
-
   if (!isOpen) return null;
-
   return (
     <div className="modal-overlay">
       <div className="modal-content">
@@ -32,7 +25,6 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
           <h2>Detalhes do Funcionário</h2>
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
-
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label">Nome</label>
@@ -45,7 +37,6 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
               className="form-input"
             />
           </div>
-
           <div className="form-group">
             <label className="form-label">Cargo</label>
             <input
@@ -57,7 +48,6 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
               className="form-input"
             />
           </div>
-
           <div className="form-group">
             <label className="form-label">Departamento</label>
             <input
@@ -69,7 +59,6 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
               className="form-input"
             />
           </div>
-
           <div className="form-group">
             <label className="form-label">Salário</label>
             <input
@@ -81,7 +70,6 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
               className="form-input"
             />
           </div>
-
           <div className="form-group">
             <label className="form-label">Data de Admissão</label>
             <input
@@ -93,7 +81,6 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
               className="form-input"
             />
           </div>
-
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '2rem' }}>
             {!isEditing ? (
               <>
@@ -135,5 +122,4 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
     </div>
   );
 };
-
 export default FuncionarioModal;
