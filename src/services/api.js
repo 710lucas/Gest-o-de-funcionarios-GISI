@@ -6,6 +6,30 @@ const generateId = (data) => {
   if (!data || data.length === 0) return 1;
   return Math.max(...data.map(item => parseInt(item.id))) + 1;
 };
+const generateDefaultData = () => {
+  const nomes = ['Ana Silva', 'Bruno Costa', 'Carlos Santos', 'Diana Oliveira', 'Eduardo Lima', 'Fernanda Souza', 'Gabriel Alves', 'Helena Rodrigues', 'Igor Pereira', 'Juliana Martins', 'Kevin Ferreira', 'Larissa Ribeiro', 'Marcos Carvalho', 'Natalia Gomes', 'Otávio Mendes', 'Paula Araújo', 'Rafael Barros', 'Sabrina Dias', 'Thiago Monteiro', 'Vanessa Cardoso', 'Wagner Teixeira', 'Yasmin Correia', 'André Barbosa', 'Beatriz Castro', 'Caio Pinto', 'Daniela Rocha', 'Elias Freitas', 'Flávia Moreira', 'Gustavo Ramos', 'Isabela Cunha', 'João Nascimento', 'Kamila Nunes', 'Leonardo Pires', 'Mariana Campos', 'Nicolas Viana', 'Olivia Azevedo', 'Pedro Duarte', 'Raquel Moura', 'Samuel Batista', 'Tatiana Melo', 'Ulisses Macedo', 'Vitória Rezende', 'William Lopes', 'Ximena Farias', 'Yuri Tavares', 'Zilda Medeiros', 'Alberto Fonseca', 'Bruna Guimarães', 'Cristiano Sales', 'Débora Xavier'];
+  const cargos = ['Desenvolvedor', 'Designer', 'Gerente', 'Analista', 'Coordenador', 'Assistente', 'Supervisor', 'Diretor', 'Especialista', 'Consultor'];
+  const departamentos = ['TI', 'Marketing', 'Vendas', 'RH', 'Financeiro', 'Operações', 'Jurídico', 'Compras'];
+  
+  const funcionarios = [];
+  for (let i = 0; i < 50; i++) {
+    const salarioBase = [3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12000, 15000];
+    const ano = 2020 + Math.floor(Math.random() * 6);
+    const mes = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+    const dia = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+    
+    funcionarios.push({
+      id: i + 1,
+      nome: nomes[i],
+      cargo: cargos[Math.floor(Math.random() * cargos.length)],
+      departamento: departamentos[Math.floor(Math.random() * departamentos.length)],
+      salario: salarioBase[Math.floor(Math.random() * salarioBase.length)],
+      data_admissao: `${ano}-${mes}-${dia}`
+    });
+  }
+  return funcionarios;
+};
+
 export const api = {
   init: async () => {
     const existingData = localStorage.getItem(DB_KEY);
@@ -18,14 +42,22 @@ export const api = {
             header: true,
             skipEmptyLines: true,
             complete: (results) => {
-              localStorage.setItem(DB_KEY, JSON.stringify(results.data));
-              resolve(results.data);
+              if (results.data && results.data.length > 0) {
+                localStorage.setItem(DB_KEY, JSON.stringify(results.data));
+                resolve(results.data);
+              } else {
+                const defaultData = generateDefaultData();
+                localStorage.setItem(DB_KEY, JSON.stringify(defaultData));
+                resolve(defaultData);
+              }
             }
           });
         });
       } catch (error) {
         console.error(error);
-        return [];
+        const defaultData = generateDefaultData();
+        localStorage.setItem(DB_KEY, JSON.stringify(defaultData));
+        return defaultData;
       }
     }
     return JSON.parse(existingData);
@@ -77,5 +109,14 @@ export const api = {
     }
     localStorage.setItem(DB_KEY, JSON.stringify(novosDados));
     return true;
+  },
+  clearDatabase: () => {
+    localStorage.setItem(DB_KEY, JSON.stringify([]));
+    return true;
+  },
+  resetToDefault: () => {
+    const defaultData = generateDefaultData();
+    localStorage.setItem(DB_KEY, JSON.stringify(defaultData));
+    return defaultData;
   }
 };

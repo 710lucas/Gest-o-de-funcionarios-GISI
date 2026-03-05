@@ -24,6 +24,9 @@ const Navbar = () => {
           <Link to="/funcionarios" className={`nav-link ${isActive('/funcionarios')}`}>
             Funcionários
           </Link>
+          <Link to="/configuracoes" className={`nav-link ${isActive('/configuracoes')}`}>
+            Configurações
+          </Link>
         </div>
       </div>
     </nav>
