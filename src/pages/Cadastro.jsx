@@ -112,7 +112,7 @@ const Cadastro = () => {
                         />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>
                         <button type="submit" className="btn btn-primary">
                             Cadastrar
                         </button>

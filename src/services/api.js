@@ -34,31 +34,9 @@ export const api = {
   init: async () => {
     const existingData = localStorage.getItem(DB_KEY);
     if (!existingData) {
-      try {
-        const response = await fetch(CSV_PATH);
-        const csvText = await response.text();
-        return new Promise((resolve) => {
-          Papa.parse(csvText, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-              if (results.data && results.data.length > 0) {
-                localStorage.setItem(DB_KEY, JSON.stringify(results.data));
-                resolve(results.data);
-              } else {
-                const defaultData = generateDefaultData();
-                localStorage.setItem(DB_KEY, JSON.stringify(defaultData));
-                resolve(defaultData);
-              }
-            }
-          });
-        });
-      } catch (error) {
-        console.error(error);
-        const defaultData = generateDefaultData();
-        localStorage.setItem(DB_KEY, JSON.stringify(defaultData));
-        return defaultData;
-      }
+      const defaultData = generateDefaultData();
+      localStorage.setItem(DB_KEY, JSON.stringify(defaultData));
+      return defaultData;
     }
     return JSON.parse(existingData);
   },

@@ -39,13 +39,13 @@ const ListaFuncionarios = () => {
   );
   return (
     <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
         <h1>Lista de Funcionários</h1>
         <input 
           type="text" 
           placeholder="Buscar funcionário..." 
           className="form-input"
-          style={{ width: '300px' }}
+          style={{ width: '100%', maxWidth: '400px' }}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

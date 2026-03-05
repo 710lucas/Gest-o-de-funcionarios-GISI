@@ -147,10 +147,11 @@ body {
 
 .form-input {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 1rem;
+  min-height: 44px;
 }
 
 .form-input:focus {
@@ -227,4 +228,166 @@ body {
   font-size: 1.5rem;
   cursor: pointer;
   color: #6b7280;
+}
+
+/* Card styling */
+.card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  /* Navbar mobile */
+  .nav-container {
+    padding: 0 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .brand {
+    font-size: 1rem;
+  }
+
+  .nav-links {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .nav-link {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    flex: 1;
+    text-align: center;
+    min-width: 120px;
+  }
+
+  /* Stats grid mobile */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  /* Table mobile */
+  .table th, .table td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  /* Hide ID column on mobile */
+  .table th:nth-child(1),
+  .table td:nth-child(1) {
+    display: none;
+  }
+
+  /* Modal mobile */
+  .modal-content {
+    padding: 1.5rem;
+    max-width: 95%;
+    margin: 0 0.5rem;
+  }
+
+  .modal-header {
+    margin-bottom: 1rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  /* Forms mobile */
+  .form-input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  /* Buttons mobile - keep inline on tablet */
+  .btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Card mobile */
+  .card {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  /* Dashboard specific */
+  .recharts-wrapper {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Very small screens */
+  .nav-links {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .nav-link {
+    width: 100%;
+    background: #f9fafb;
+    border-radius: 6px;
+    min-width: unset;
+  }
+
+  .table th, .table td {
+    padding: 0.4rem 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  /* Hide department column on very small screens */
+  .table th:nth-child(4),
+  .table td:nth-child(4) {
+    display: none;
+  }
+
+  /* Action buttons full width on small screens */
+  .table .btn {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .modal-content {
+    padding: 1rem;
+  }
+
+  /* Stack buttons vertically on very small screens */
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }

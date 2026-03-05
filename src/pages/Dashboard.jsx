@@ -5,7 +5,7 @@ import { Users, Building, DollarSign, Calendar, Filter, TrendingUp, PieChart as 
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
-  <div className="stat-card" style={{ borderLeft: `4px solid ${color}`, padding: '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', backgroundColor: '#fff', display: 'flex', alignItems: 'center', gap: '1rem', transition: 'transform 0.2s' }}>
+  <div className="stat-card" style={{ padding: '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', backgroundColor: '#fff', display: 'flex', alignItems: 'center', gap: '1rem', transition: 'transform 0.2s', flexGrow: '1' }}>
     <div style={{ backgroundColor: `${color}20`, padding: '1rem', borderRadius: '50%' }}>
       <Icon size={32} color={color} />
     </div>
@@ -162,7 +162,7 @@ const Dashboard = () => {
   };
   return (
     <div className="container" style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '2rem', color: '#1f2937' }}>Dashboard</h1>
           <p style={{ color: '#6b7280', margin: '0.5rem 0 0 0' }}>
@@ -170,7 +170,7 @@ const Dashboard = () => {
           </p>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fff', padding: '0.5rem 1rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fff', padding: '0.5rem 1rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', width: 'fit-content' }}>
           <Filter size={20} color="#6b7280" />
           <select 
             value={selectedDepartamento}
@@ -185,7 +185,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="stats-grid" style={{ display: 'flex', justifyContent: 'space-between', gap: '1.5rem', marginBottom: '2rem' }}>
         <StatCard 
           title="Funcionários" 
           value={stats.totalFuncionarios} 
