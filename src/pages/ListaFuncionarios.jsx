@@ -6,6 +6,18 @@ const ListaFuncionarios = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedFuncionario, setSelectedFuncionario] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const loadData = () => {
     const data = api.getAll();
     setFuncionarios(data);
@@ -38,7 +50,7 @@ const ListaFuncionarios = () => {
     f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
   );
   return (
-    <div className="container">
+    <div className="container" style={{ paddingBottom: isMobile ? '80px' : '0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
         <h1>Lista de Funcionários</h1>
         <input 

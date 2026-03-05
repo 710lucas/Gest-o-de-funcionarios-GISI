@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
 const Cadastro = () => {
     const navigate = useNavigate();
+    const [isMobile, setIsMobile] = useState(false);
     const [formData, setFormData] = useState({
         nome: '',
         cargo: '',
@@ -11,6 +12,17 @@ const Cadastro = () => {
         salario: '',
         data_admissao: ''
     });
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -34,7 +46,7 @@ const Cadastro = () => {
     };
 
     return (
-        <div className="container">
+        <div className="container" style={{ paddingBottom: isMobile ? '80px' : '0' }}>
             <h1 style={{ marginBottom: '2rem' }}>Cadastro de Funcionário</h1>
             
             <div className="card" style={{ maxWidth: '600px', margin: '0 auto' }}>

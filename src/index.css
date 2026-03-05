@@ -247,17 +247,19 @@ body {
   /* Navbar mobile */
   .nav-container {
     padding: 0 1rem;
-    flex-direction: column;
     gap: 1rem;
   }
 
   .brand {
     font-size: 1rem;
+    display: none;
   }
 
   .nav-links {
+    display: flex;
+    flex-direction: row;
     gap: 0.5rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     width: 100%;
   }
@@ -348,9 +350,15 @@ body {
   .recharts-wrapper {
     width: 100% !important;
   }
-}
 
-@media (max-width: 480px) {
+  /* Bottom navigation bar styles */
+  .nav-link-mobile {
+    transition: color 0.2s, transform 0.1s;
+  }
+
+  .nav-link-mobile:active {
+    transform: scale(0.95);
+  }
   /* Very small screens */
   .nav-links {
     flex-direction: column;

@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Trash2, RefreshCw, AlertTriangle, Database } from 'lucide-react';
 
 const Config = () => {
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleClearDatabase = () => {
     api.clearDatabase();
@@ -21,29 +33,29 @@ const Config = () => {
   };
 
   return (
-    <div className="container" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="container" style={{ padding: isMobile ? '1rem' : '2rem', maxWidth: '800px', margin: '0 auto', paddingBottom: isMobile ? '80px' : '2rem' }}>
       <div>
-        <h1 style={{ margin: 0, fontSize: '2rem', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Database size={32} color="#3b82f6" />
+        <h1 style={{ margin: 0, fontSize: isMobile ? '1.5rem' : '2rem', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <Database size={isMobile ? 28 : 32} color="#3b82f6" />
           Configurações
         </h1>
-        <p style={{ color: '#6b7280', margin: '0.5rem 0 0 0' }}>
+        <p style={{ color: '#6b7280', margin: '0.5rem 0 0 0', fontSize: isMobile ? '0.875rem' : '1rem' }}>
           Gerencie a base de dados do sistema
         </p>
       </div>
 
-      <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ marginTop: isMobile ? '1rem' : '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Card Reset to Default */}
-        <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', borderLeft: '4px solid #10b981' }}>
-          <div style={{ display: 'flex', alignItems: 'start', gap: '1rem' }}>
+        <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', borderLeft: '4px solid #10b981' }}>
+          <div style={{ display: 'flex', alignItems: 'start', gap: '1rem', flexDirection: isMobile ? 'column' : 'row' }}>
             <div style={{ backgroundColor: '#10b98120', padding: '0.75rem', borderRadius: '50%' }}>
-              <RefreshCw size={24} color="#10b981" />
+              <RefreshCw size={isMobile ? 20 : 24} color="#10b981" />
             </div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.25rem' }}>
+              <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
                 Resetar para Base Padrão
               </h3>
-              <p style={{ color: '#6b7280', margin: '0.5rem 0', fontSize: '0.9rem' }}>
+              <p style={{ color: '#6b7280', margin: '0.5rem 0', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
                 Substitui todos os dados atuais pelos 50 funcionários padrão do sistema. 
                 Esta ação não pode ser desfeita.
               </p>
@@ -99,16 +111,16 @@ const Config = () => {
         </div>
 
         {/* Card Clear Database */}
-        <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', borderLeft: '4px solid #ef4444' }}>
-          <div style={{ display: 'flex', alignItems: 'start', gap: '1rem' }}>
+        <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', borderLeft: '4px solid #ef4444' }}>
+          <div style={{ display: 'flex', alignItems: 'start', gap: '1rem', flexDirection: isMobile ? 'column' : 'row' }}>
             <div style={{ backgroundColor: '#ef444420', padding: '0.75rem', borderRadius: '50%' }}>
-              <Trash2 size={24} color="#ef4444" />
+              <Trash2 size={isMobile ? 20 : 24} color="#ef4444" />
             </div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.25rem' }}>
+              <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
                 Limpar Base de Dados
               </h3>
-              <p style={{ color: '#6b7280', margin: '0.5rem 0', fontSize: '0.9rem' }}>
+              <p style={{ color: '#6b7280', margin: '0.5rem 0', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
                 Remove todos os funcionários da base de dados. 
                 Você ficará com uma base vazia. Esta ação não pode ser desfeita.
               </p>
