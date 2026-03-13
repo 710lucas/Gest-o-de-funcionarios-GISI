@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Trash2, RefreshCw, AlertTriangle, Database } from 'lucide-react';
+import { Trash2, RefreshCw, AlertTriangle, Database, Server, HardDrive } from 'lucide-react';
 
 const Config = () => {
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [config, setConfig] = useState({ useApi: false, apiUrl: '' });
+  const [apiUrl, setApiUrl] = useState('');
 
   useEffect(() => {
     const checkMobile = () => {
@@ -16,6 +18,12 @@ const Config = () => {
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const currentConfig = api.getConfig();
+    setConfig(currentConfig);
+    setApiUrl(currentConfig.apiUrl);
   }, []);
 
   const handleClearDatabase = () => {
@@ -32,6 +40,27 @@ const Config = () => {
     window.location.reload();
   };
 
+  const handleToggleDataSource = (useApi) => {
+    if (useApi && !apiUrl) {
+      alert('Por favor, informe a URL da API antes de ativar esta opção.');
+      return;
+    }
+    api.setApiConfig(useApi, apiUrl || 'http://localhost:8080/funcionarios');
+    setConfig({ useApi, apiUrl: apiUrl || 'http://localhost:8080/funcionarios' });
+    alert(`Fonte de dados alterada para ${useApi ? 'API Externa' : 'LocalStorage'}. A página será recarregada.`);
+    window.location.reload();
+  };
+
+  const handleSaveApiUrl = () => {
+    if (!apiUrl) {
+      alert('Por favor, informe a URL da API.');
+      return;
+    }
+    api.setApiConfig(config.useApi, apiUrl);
+    setConfig({ ...config, apiUrl });
+    alert('URL da API salva com sucesso!');
+  };
+
   return (
     <div className="container" style={{ padding: isMobile ? '1rem' : '2rem', maxWidth: '800px', margin: '0 auto', paddingBottom: isMobile ? '80px' : '2rem' }}>
       <div>
@@ -45,6 +74,127 @@ const Config = () => {
       </div>
 
       <div style={{ marginTop: isMobile ? '1rem' : '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* Card Data Source Configuration */}
+        <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', borderLeft: '4px solid #3b82f6' }}>
+          <div style={{ display: 'flex', alignItems: 'start', gap: '1rem', flexDirection: isMobile ? 'column' : 'row' }}>
+            <div style={{ backgroundColor: '#3b82f620', padding: '0.75rem', borderRadius: '50%' }}>
+              {config.useApi ? <Server size={isMobile ? 20 : 24} color="#3b82f6" /> : <HardDrive size={isMobile ? 20 : 24} color="#3b82f6" />}
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
+                Fonte de Dados
+              </h3>
+              <p style={{ color: '#6b7280', margin: '0.5rem 0', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
+                Escolha entre usar o LocalStorage do navegador ou uma API externa para gerenciar os dados.
+              </p>
+              
+              {/* Status atual */}
+              <div style={{ 
+                marginTop: '1rem', 
+                padding: '0.75rem', 
+                backgroundColor: config.useApi ? '#dbeafe' : '#f3f4f6', 
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                {config.useApi ? <Server size={18} color="#3b82f6" /> : <HardDrive size={18} color="#6b7280" />}
+                <strong style={{ color: config.useApi ? '#1e40af' : '#374151' }}>
+                  Modo Atual: {config.useApi ? 'API Externa' : 'LocalStorage'}
+                </strong>
+              </div>
+
+              {/* Configuração da URL da API */}
+              <div style={{ marginTop: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151', fontSize: isMobile ? '0.875rem' : '0.95rem' }}>
+                  URL da API:
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row' }}>
+                  <input
+                    type="text"
+                    value={apiUrl}
+                    onChange={(e) => setApiUrl(e.target.value)}
+                    placeholder="http://localhost:8080/funcionarios"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: isMobile ? '0.875rem' : '0.95rem'
+                    }}
+                  />
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={handleSaveApiUrl}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    Salvar URL
+                  </button>
+                </div>
+              </div>
+
+              {/* Botões de alternância */}
+              <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row' }}>
+                <button 
+                  className="btn" 
+                  onClick={() => handleToggleDataSource(false)}
+                  disabled={!config.useApi}
+                  style={{ 
+                    backgroundColor: !config.useApi ? '#6b7280' : '#fff',
+                    color: !config.useApi ? '#fff' : '#374151',
+                    border: '1px solid #d1d5db',
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    opacity: !config.useApi ? 0.6 : 1,
+                    cursor: !config.useApi ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <HardDrive size={16} />
+                  Usar LocalStorage
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => handleToggleDataSource(true)}
+                  disabled={config.useApi}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    opacity: config.useApi ? 0.6 : 1,
+                    cursor: config.useApi ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <Server size={16} />
+                  Usar API Externa
+                </button>
+              </div>
+
+              {config.useApi && (
+                <div style={{ 
+                  marginTop: '1rem', 
+                  padding: '0.75rem', 
+                  backgroundColor: '#fef3c7', 
+                  borderRadius: '6px',
+                  border: '1px solid #f59e0b',
+                  fontSize: isMobile ? '0.8rem' : '0.875rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <AlertTriangle size={16} color="#f59e0b" />
+                    <strong style={{ color: '#92400e' }}>Atenção:</strong>
+                  </div>
+                  <p style={{ margin: '0.5rem 0 0 0', color: '#78350f' }}>
+                    No modo API, as funções de limpar e resetar base de dados não estão disponíveis. 
+                    Use a API backend para gerenciar os dados.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Card Reset to Default */}
         <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', borderLeft: '4px solid #10b981' }}>
           <div style={{ display: 'flex', alignItems: 'start', gap: '1rem', flexDirection: isMobile ? 'column' : 'row' }}>

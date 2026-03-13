@@ -17,9 +17,17 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
     onSave({ ...formData, id: funcionario.id });
     onClose();
   };
+
+  const handleOverlayClick = (e) => {
+    // Só fecha se o clique foi diretamente na overlay, não em seus filhos
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   if (!isOpen) return null;
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content">
         <div className="modal-header">
           <h2>Detalhes do Funcionário</h2>
@@ -87,14 +95,23 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
                 <button 
                   type="button" 
                   className="btn btn-primary"
-                  onClick={() => setIsEditing(true)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Botão Editar clicado');
+                    setIsEditing(true);
+                  }}
                 >
                   Editar
                 </button>
                 <button 
                   type="button" 
                   className="btn btn-danger"
-                  onClick={() => onDelete(formData.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDelete(formData.id);
+                  }}
                 >
                   Excluir
                 </button>

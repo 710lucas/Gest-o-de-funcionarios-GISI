@@ -32,7 +32,7 @@ const Cadastro = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
         if (!formData.nome || !formData.cargo || !formData.salario) {
@@ -40,9 +40,14 @@ const Cadastro = () => {
             return;
         }
 
-        api.create(formData);
-        alert('Funcionário cadastrado com sucesso!');
-        navigate('/funcionarios');
+        try {
+            await api.create(formData);
+            alert('Funcionário cadastrado com sucesso!');
+            navigate('/funcionarios');
+        } catch (error) {
+            console.error('Erro ao cadastrar:', error);
+            alert('Erro ao cadastrar funcionário: ' + (error.message || 'Erro desconhecido'));
+        }
     };
 
     return (

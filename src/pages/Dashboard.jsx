@@ -36,8 +36,14 @@ const Dashboard = () => {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
 
-  const loadStats = (departamento = '') => {
-    let data = api.getAll();
+  const loadStats = async (departamento = '') => {
+    try {
+      let data = await api.getAll();
+      
+      if (!Array.isArray(data)) {
+        console.warn('Dados inválidos recebidos:', data);
+        data = [];
+      }
     
     const allDepartamentos = [...new Set(data.map(f => f.departamento).filter(Boolean))];
     setDepartamentos(allDepartamentos);
@@ -121,6 +127,22 @@ const Dashboard = () => {
       salarioRangeData,
       topSalarios
     });
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+      // Define valores padrão em caso de erro
+      setStats({
+        totalFuncionarios: 0,
+        totalDepartamentos: 0,
+        folhaSalarial: 0,
+        mediaSalarial: 0
+      });
+      setChartData({
+        departamentoData: [],
+        cargoData: [],
+        salarioRangeData: [],
+        topSalarios: []
+      });
+    }
   };
   useEffect(() => {
     api.init().then(() => {

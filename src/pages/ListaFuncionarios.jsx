@@ -7,6 +7,8 @@ const ListaFuncionarios = () => {
   const [selectedFuncionario, setSelectedFuncionario] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -18,37 +20,77 @@ const ListaFuncionarios = () => {
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  const loadData = () => {
-    const data = api.getAll();
-    setFuncionarios(data);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getAll();
+      console.log('Dados carregados:', data);
+      setFuncionarios(data || []);
+    } catch (err) {
+      console.error('Erro ao carregar dados:', err);
+      setError(err.message || 'Erro ao carregar funcionários');
+      setFuncionarios([]);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => {
     loadData();
   }, []);
   const handleOpenModal = (funcionario) => {
+    console.log('handleOpenModal chamado', funcionario);
     setSelectedFuncionario(funcionario);
     setModalOpen(true);
   };
   const handleCloseModal = () => {
+    console.log('handleCloseModal chamado');
     setModalOpen(false);
     setSelectedFuncionario(null);
   };
-  const handleSave = (updatedFuncionario) => {
-    api.update(updatedFuncionario.id, updatedFuncionario);
-    loadData();
-    handleCloseModal();
-  };
-  const handleDelete = (id) => {
-    if (window.confirm('Tem certeza que deseja excluir este funcionário?')) {
-      api.delete(id);
-      loadData();
+  const handleSave = async (updatedFuncionario) => {
+    console.log('handleSave chamado', updatedFuncionario);
+    try {
+      await api.update(updatedFuncionario.id, updatedFuncionario);
+      await loadData();
       handleCloseModal();
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
+      alert('Erro ao salvar funcionário: ' + (err.message || 'Erro desconhecido'));
+    }
+  };
+  const handleDelete = async (id) => {
+    console.log('handleDelete chamado', id);
+    if (window.confirm('Tem certeza que deseja excluir este funcionário?')) {
+      try {
+        await api.delete(id);
+        await loadData();
+        handleCloseModal();
+      } catch (err) {
+        console.error('Erro ao deletar:', err);
+        alert('Erro ao deletar funcionário: ' + (err.message || 'Erro desconhecido'));
+      }
     }
   };
   const filteredFuncionarios = funcionarios.filter(f => 
-    f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.cargo.toLowerCase().includes(searchTerm.toLowerCase())
+    (f.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (f.cargo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  if (error) {
+    return (
+      <div className="container" style={{ paddingBottom: isMobile ? '80px' : '0' }}>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <h2 style={{ color: '#ef4444' }}>Erro ao carregar dados</h2>
+          <p style={{ color: '#6b7280', margin: '1rem 0' }}>{error}</p>
+          <button className="btn btn-primary" onClick={loadData}>
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="container" style={{ paddingBottom: isMobile ? '80px' : '0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
@@ -62,7 +104,13 @@ const ListaFuncionarios = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
-      <div className="table-container">
+      
+      {loading ? (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <p style={{ color: '#6b7280' }}>Carregando...</p>
+        </div>
+      ) : (
+        <div className="table-container">
         <table className="table">
           <thead>
             <tr>
@@ -101,6 +149,8 @@ const ListaFuncionarios = () => {
           </tbody>
         </table>
       </div>
+      )}
+      
       {modalOpen && (
         <FuncionarioModal
           isOpen={modalOpen}
