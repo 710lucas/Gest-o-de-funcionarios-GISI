@@ -3,11 +3,13 @@ import Papa from 'papaparse';
 import { api } from '../services/api';
 import { Users, Building, DollarSign, Calendar, Filter, TrendingUp, PieChart as PieChartIcon } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import AIChat from '../components/AIChat';
 
-const StatCard = ({ title, value, icon: Icon, color, isMobile }) => (
+// eslint-disable-next-line no-unused-vars
+const StatCard = ({ title, value, icon: IconComponent, color, isMobile }) => (
   <div className="stat-card" style={{ padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', backgroundColor: '#fff', display: 'flex', alignItems: 'center', gap: '1rem', transition: 'transform 0.2s', width: 'fit-content', flexGrow: '1' }}>
     <div style={{ backgroundColor: `${color}20`, padding: isMobile ? '0.75rem' : '1rem', borderRadius: '50%', display : 'flex' }}>
-      <Icon size={isMobile ? 24 : 32} color={color} />
+      <IconComponent size={isMobile ? 24 : 32} color={color} />
     </div>
     <div style={{ flex: 1, minWidth: 0 }}>
       <div className="stat-label" style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>{title}</div>
@@ -129,7 +131,6 @@ const Dashboard = () => {
     });
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
-      // Define valores padrão em caso de erro
       setStats({
         totalFuncionarios: 0,
         totalDepartamentos: 0,
@@ -144,6 +145,7 @@ const Dashboard = () => {
       });
     }
   };
+
   useEffect(() => {
     api.init().then(() => {
       loadStats(selectedDepartamento);
@@ -160,6 +162,7 @@ const Dashboard = () => {
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
   const handleImportCsv = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -169,7 +172,7 @@ const Dashboard = () => {
         complete: (results) => {
           if (results.data && results.data.length > 0) {
             const firstRow = results.data[0];
-            if (!firstRow.hasOwnProperty('nome') && !firstRow.hasOwnProperty('cargo')) {
+            if (!('nome' in firstRow) && !('cargo' in firstRow)) {
                alert('CSV inválido!');
                return;
             }
@@ -191,9 +194,11 @@ const Dashboard = () => {
       });
     }
   };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
+
   return (
     <div className="container" style={{ padding: isMobile ? '1rem' : '2rem', paddingBottom: isMobile ? '80px' : '2rem' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: isMobile ? '1rem' : '2rem' }}>
@@ -223,7 +228,6 @@ const Dashboard = () => {
         display: 'flex',
         justifyContent: 'space-between', 
         flexWrap: 'wrap',
-        // gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: isMobile ? '1rem' : '1.5rem', 
         marginBottom: isMobile ? '1rem' : '2rem' 
       }}>
@@ -257,7 +261,9 @@ const Dashboard = () => {
         />
       </div>
 
-      <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+      <AIChat isMobile={isMobile} />
+
+      <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginTop: '2rem' }}>
         <h3 style={{ marginTop: 0, color: '#1f2937', fontSize: isMobile ? '1.1rem' : '1.25rem' }}>Ações Rápidas (Banco de Dados)</h3>
         <div style={{ display: 'flex', gap: isMobile ? '0.5rem' : '1rem', marginTop: '1rem', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
           <button className="btn btn-secondary" onClick={api.exportCsv} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
@@ -405,4 +411,5 @@ const Dashboard = () => {
     </div>
   );
 };
+
 export default Dashboard;
