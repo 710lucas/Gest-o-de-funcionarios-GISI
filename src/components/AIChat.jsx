@@ -12,8 +12,25 @@ const AIChat = ({ isMobile }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [placeholder, setPlaceholder] = useState('');
+
+  const placeholders = [
+    "Compare a quantidade de funcionários e a média salarial por departamento",
+    "Mostre a evolução de contratações e o aumento da folha salarial por ano",
+    "Distribuição de cargos e os 5 maiores salários da empresa",
+    "Analise o crescimento anual vs distribuição por departamento",
+    "Panorama geral: total por setor e média de tempo de casa",
+    "Qual o impacto salarial dos novos funcionários em 2025?"
+  ];
+
+  React.useEffect(() => {
+    // Escolhe um placeholder aleatório apenas ao montar o componente
+    const randomIndex = Math.floor(Math.random() * placeholders.length);
+    setPlaceholder(placeholders[randomIndex]);
+  }, []);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,21 +49,52 @@ const AIChat = ({ isMobile }) => {
     }
   };
 
-  const renderChart = () => {
-    if (!result || !result.chartConfig || !result.chartData) return null;
+  const renderChart = (chartConfig) => {
+    if (!result || !result.datasets || !chartConfig) return null;
 
-    const { type, xAxis, dataKey, title } = result.chartConfig;
-    const data = result.chartData;
+    const { type, xAxis, dataKey, title, datasetName, prefix = '', suffix = '' } = chartConfig;
+    const data = result.datasets[datasetName] || [];
+
+    if (data.length === 0) return <p style={{ textAlign: 'center', color: '#6b7280' }}>Sem dados para este gráfico.</p>;
+
+    if (type === 'card') {
+      const value = Array.isArray(data) ? (data[0]?.[dataKey] ?? 0) : (data[dataKey] ?? 0);
+      const formattedValue = typeof value === 'number' 
+        ? value.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) 
+        : value;
+
+      return (
+        <div style={{ 
+          backgroundColor: '#f8fafc', 
+          padding: '1.5rem', 
+          borderRadius: '12px', 
+          border: '1px solid #e2e8f0',
+          textAlign: 'center',
+          margin: '1rem auto',
+          maxWidth: '300px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+        }}>
+          <h5 style={{ margin: '0 0 0.5rem 0', color: '#64748b', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {title}
+          </h5>
+          <div style={{ fontSize: '2rem', fontWeight: '700', color: '#1e293b' }}>
+            <span style={{ fontSize: '1.2rem', color: '#94a3b8', marginRight: '0.25rem' }}>{prefix}</span>
+            {formattedValue}
+            <span style={{ fontSize: '1rem', color: '#94a3b8', marginLeft: '0.25rem' }}>{suffix}</span>
+          </div>
+        </div>
+      );
+    }
 
     return (
-      <div style={{ marginTop: '1.5rem', height: isMobile ? '300px' : '400px', width: '100%' }}>
-        <h4 style={{ color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>{title}</h4>
+      <div style={{ marginTop: '1rem', height: isMobile ? '300px' : '400px', width: '100%', marginBottom: '2rem' }}>
+        <h4 style={{ color: '#374151', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>{title}</h4>
         <ResponsiveContainer width="100%" height="100%">
           {type === 'bar' && (
             <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={xAxis} />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis dataKey={xAxis} tick={{fontSize: 12}} />
+              <YAxis tick={{fontSize: 12}} />
               <Tooltip />
               <Legend />
               <Bar dataKey={dataKey} fill="#8b5cf6" radius={[4, 4, 0, 0]} />
@@ -54,21 +102,21 @@ const AIChat = ({ isMobile }) => {
           )}
           {type === 'line' && (
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={xAxis} />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis dataKey={xAxis} tick={{fontSize: 12}} />
+              <YAxis tick={{fontSize: 12}} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey={dataKey} stroke="#8b5cf6" strokeWidth={2} />
+              <Line type="monotone" dataKey={dataKey} stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
             </LineChart>
           )}
           {type === 'area' && (
             <AreaChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={xAxis} />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis dataKey={xAxis} tick={{fontSize: 12}} />
+              <YAxis tick={{fontSize: 12}} />
               <Tooltip />
-              <Area type="monotone" dataKey={dataKey} stroke="#8b5cf6" fill="#8b5cf680" />
+              <Area type="monotone" dataKey={dataKey} stroke="#8b5cf6" fill="#8b5cf640" strokeWidth={2} />
             </AreaChart>
           )}
           {type === 'pie' && (
@@ -77,9 +125,9 @@ const AIChat = ({ isMobile }) => {
                 data={data}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
+                labelLine={true}
                 label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={isMobile ? 80 : 120}
+                outerRadius={isMobile ? 70 : 100}
                 fill="#8884d8"
                 dataKey={dataKey}
               >
@@ -88,6 +136,7 @@ const AIChat = ({ isMobile }) => {
                 ))}
               </Pie>
               <Tooltip />
+              <Legend />
             </PieChart>
           )}
         </ResponsiveContainer>
@@ -116,18 +165,19 @@ const AIChat = ({ isMobile }) => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ex: Qual o crescimento de funcionários nos últimos 3 anos?"
+          placeholder={`Ex: ${placeholder}`}
           style={{ 
             flex: 1, 
             padding: '0.75rem 1rem', 
             borderRadius: '8px', 
             border: '1px solid #d1d5db',
-            fontSize: isMobile ? '0.875rem' : '1rem'
+            fontSize: isMobile ? '0.875rem' : '1rem',
+            transition: 'all 0.3s ease'
           }}
           disabled={loading}
         />
@@ -146,6 +196,33 @@ const AIChat = ({ isMobile }) => {
           {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
         </button>
       </form>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <span style={{ fontSize: '0.75rem', color: '#6b7280', width: '100%', marginBottom: '0.25rem' }}>
+          💡 Sugestões de análise complexa:
+        </span>
+        {placeholders.slice(0, 3).map((p, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setQuery(p)}
+            style={{
+              fontSize: '0.7rem',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '999px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              color: '#4b5563',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => { e.target.style.borderColor = '#8b5cf6'; e.target.style.color = '#8b5cf6'; }}
+            onMouseOut={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.color = '#4b5563'; }}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
 
       {error && (
         <div style={{ 
@@ -191,9 +268,16 @@ const AIChat = ({ isMobile }) => {
           <div style={{ border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1rem', backgroundColor: '#fff' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#10b981' }}>
               <BarChart2 size={18} />
-              <strong style={{ fontSize: '0.9rem' }}>Gráfico Gerado:</strong>
+              <strong style={{ fontSize: '0.9rem' }}>Gráficos Gerados:</strong>
             </div>
-            {renderChart()}
+            {result.charts && result.charts.map((chartConfig, idx) => (
+              <React.Fragment key={idx}>
+                {renderChart(chartConfig)}
+              </React.Fragment>
+            ))}
+            {(!result.charts || result.charts.length === 0) && (
+              <p style={{ textAlign: 'center', color: '#6b7280' }}>Nenhum gráfico disponível para esta consulta.</p>
+            )}
           </div>
 
           <div style={{ 
