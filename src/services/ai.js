@@ -20,28 +20,36 @@ export const aiService = {
       Sua tarefa é responder a perguntas do usuário gerando um plano de execução em JSON.
       O plano deve conter:
       1. "entities": lista de entidades afetadas (neste caso, sempre ['funcionario']).
-      2. "queryScript": um script JavaScript (função anônima) que recebe um array 'data' e retorna os dados filtrados/agrupados necessários para o gráfico.
-      3. "chartConfig": configuração do gráfico para Recharts. Deve incluir:
-         - "type": 'bar', 'line', 'pie', ou 'area'.
-         - "xAxis": o campo para o eixo X.
+      2. "queryScript": um script JavaScript (função anônima) que recebe um array 'data' e retorna um objeto contendo os datasets necessários para os gráficos. 
+         Exemplo: { data1: [...], data2: [...] }
+      3. "charts": uma lista de configurações de gráficos para Recharts. Se o usuário não especificar o tipo de gráfico, escolha o mais adequado para os dados (ex: 'pie' para proporções, 'line' ou 'area' para séries temporais, 'bar' para comparações, 'card' para indicadores únicos ou totais).
+         Cada item deve conter:
+         - "type": 'bar', 'line', 'pie', 'area' ou 'card'.
+         - "xAxis": o campo para o eixo X (não necessário para 'card').
          - "dataKey": o campo para os valores.
-         - "title": título do gráfico.
+         - "datasetName": o nome da chave correspondente no retorno do queryScript.
+         - "title": título do gráfico ou indicador.
+         - "prefix": (opcional para 'card') ex: 'R$ '.
+         - "suffix": (opcional para 'card') ex: ' func.'.
       4. "explanation": breve explicação do que será feito.
 
-      Exemplo de resposta para "Crescimento de funcionários nos últimos 3 anos":
+      Exemplo de resposta:
       {
         "entities": ["funcionario"],
-        "queryScript": "const years = [2023, 2024, 2025]; return years.map(y => ({ year: y, count: data.filter(f => f.data_admissao.startsWith(y.toString())).length }))",
-        "chartConfig": {
-          "type": "line",
-          "xAxis": "year",
-          "dataKey": "count",
-          "title": "Crescimento de Funcionários (Últimos 3 Anos)"
-        },
-        "explanation": "Vou agrupar os funcionários por ano de admissão para os últimos 3 anos."
+        "queryScript": "const years = [2023, 2024, 2025]; const stats = years.map(y => ({ year: y, count: data.filter(f => f.data_admissao.startsWith(y.toString())).length })); return { timeData: stats };",
+        "charts": [
+          {
+            "type": "area",
+            "xAxis": "year",
+            "dataKey": "count",
+            "datasetName": "timeData",
+            "title": "Crescimento de Funcionários por Ano"
+          }
+        ],
+        "explanation": "Vou analisar a tendência de contratações nos últimos 3 anos utilizando um gráfico de área para destacar o volume acumulado."
       }
 
-      IMPORTANTE: Retorne APENAS o JSON.
+      IMPORTANTE: Retorne APENAS o JSON. Gere múltiplos gráficos se a pergunta for complexa ou se diferentes perspectivas ajudarem na compreensão.
     `;
 
     let response;
@@ -58,19 +66,27 @@ export const aiService = {
     const aiResult = JSON.parse(response);
     
     // Executar o script gerado
-    let chartData = [];
+    let datasets = {};
     try {
       const executeQuery = new Function('data', aiResult.queryScript);
-      chartData = executeQuery(allData);
+      datasets = executeQuery(allData);
+      
+      // Se a IA retornar um array diretamente (retrocompatibilidade/erro de lógica da IA), tentamos normalizar
+      if (Array.isArray(datasets)) {
+        datasets = { default: datasets };
+        if (aiResult.charts) {
+          aiResult.charts.forEach(c => c.datasetName = 'default');
+        }
+      }
     } catch (e) {
       console.error('Erro ao executar queryScript da IA:', e);
       throw new Error('A IA gerou um script de consulta inválido.');
     }
 
-    // Gerar interpretação final
+    // Gerar interpretação final com base em todos os dados
     const interpretationPrompt = `
       Com base nos dados abaixo retornados para a consulta "${userPrompt}":
-      ${JSON.stringify(chartData)}
+      ${JSON.stringify(datasets)}
       
       Gere um pequeno texto interpretando esses resultados para o usuário.
     `;
@@ -79,7 +95,7 @@ export const aiService = {
 
     return {
       ...aiResult,
-      chartData,
+      datasets,
       finalInterpretation
     };
   },
