@@ -1,0 +1,220 @@
+import React, { useState } from 'react';
+import { Send, Bot, Loader2, BarChart2, MessageSquare, AlertCircle } from 'lucide-react';
+import { aiService } from '../services/ai';
+import { 
+  BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell 
+} from 'recharts';
+import ReactMarkdown from 'react-markdown';
+
+const AIChat = ({ isMobile }) => {
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await aiService.query(query);
+      setResult(data);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Erro ao processar sua solicitação.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderChart = () => {
+    if (!result || !result.chartConfig || !result.chartData) return null;
+
+    const { type, xAxis, dataKey, title } = result.chartConfig;
+    const data = result.chartData;
+
+    return (
+      <div style={{ marginTop: '1.5rem', height: isMobile ? '300px' : '400px', width: '100%' }}>
+        <h4 style={{ color: '#374151', marginBottom: '1rem', textAlign: 'center' }}>{title}</h4>
+        <ResponsiveContainer width="100%" height="100%">
+          {type === 'bar' && (
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={xAxis} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey={dataKey} fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          )}
+          {type === 'line' && (
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={xAxis} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey={dataKey} stroke="#8b5cf6" strokeWidth={2} />
+            </LineChart>
+          )}
+          {type === 'area' && (
+            <AreaChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={xAxis} />
+              <YAxis />
+              <Tooltip />
+              <Area type="monotone" dataKey={dataKey} stroke="#8b5cf6" fill="#8b5cf680" />
+            </AreaChart>
+          )}
+          {type === 'pie' && (
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                outerRadius={isMobile ? 80 : 120}
+                fill="#8884d8"
+                dataKey={dataKey}
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          )}
+        </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  return (
+    <div className="card" style={{ 
+      backgroundColor: '#fff', 
+      padding: isMobile ? '1rem' : '1.5rem', 
+      borderRadius: '8px', 
+      boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+      marginTop: '2rem',
+      border: '1px solid #e5e7eb'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <div style={{ backgroundColor: '#8b5cf620', padding: '0.5rem', borderRadius: '50%' }}>
+          <Bot size={24} color="#8b5cf6" />
+        </div>
+        <div>
+          <h3 style={{ margin: 0, color: '#1f2937' }}>Assistente de Dados IA</h3>
+          <p style={{ margin: 0, fontSize: '0.875rem', color: '#6b7280' }}>
+            Pergunte qualquer coisa sobre os funcionários
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ex: Qual o crescimento de funcionários nos últimos 3 anos?"
+          style={{ 
+            flex: 1, 
+            padding: '0.75rem 1rem', 
+            borderRadius: '8px', 
+            border: '1px solid #d1d5db',
+            fontSize: isMobile ? '0.875rem' : '1rem'
+          }}
+          disabled={loading}
+        />
+        <button 
+          type="submit" 
+          className="btn btn-primary"
+          style={{ 
+            backgroundColor: '#8b5cf6', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            padding: '0.75rem 1.25rem'
+          }}
+          disabled={loading || !query.trim()}
+        >
+          {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+        </button>
+      </form>
+
+      {error && (
+        <div style={{ 
+          padding: '1rem', 
+          backgroundColor: '#fee2e2', 
+          borderRadius: '8px', 
+          color: '#ef4444',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginBottom: '1rem'
+        }}>
+          <AlertCircle size={20} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <Loader2 className="animate-spin" size={40} color="#8b5cf6" style={{ margin: '0 auto' }} />
+          <p style={{ marginTop: '1rem', color: '#6b7280' }}>Analisando dados e gerando resposta...</p>
+        </div>
+      )}
+
+      {result && !loading && (
+        <div style={{ animation: 'fadeIn 0.5s ease-in' }}>
+          <div style={{ 
+            backgroundColor: '#f9fafb', 
+            padding: '1rem', 
+            borderRadius: '8px', 
+            borderLeft: '4px solid #8b5cf6',
+            marginBottom: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: '#8b5cf6' }}>
+              <MessageSquare size={18} />
+              <strong style={{ fontSize: '0.9rem' }}>Plano de Execução:</strong>
+            </div>
+            <div className="markdown-content" style={{ margin: 0, color: '#4b5563', fontSize: '0.95rem' }}>
+              <ReactMarkdown>{result.explanation}</ReactMarkdown>
+            </div>
+          </div>
+
+          <div style={{ border: '1px solid #f3f4f6', borderRadius: '12px', padding: '1rem', backgroundColor: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#10b981' }}>
+              <BarChart2 size={18} />
+              <strong style={{ fontSize: '0.9rem' }}>Gráfico Gerado:</strong>
+            </div>
+            {renderChart()}
+          </div>
+
+          <div style={{ 
+            marginTop: '1.5rem',
+            backgroundColor: '#eff6ff', 
+            padding: '1.25rem', 
+            borderRadius: '8px', 
+            border: '1px solid #dbeafe'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#3b82f6' }}>
+              <Bot size={20} />
+              <strong style={{ fontSize: '1rem' }}>Interpretação da IA:</strong>
+            </div>
+            <div className="markdown-content" style={{ margin: 0, color: '#1e40af', lineHeight: '1.6', fontSize: '1rem' }}>
+              <ReactMarkdown>{result.finalInterpretation}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AIChat;

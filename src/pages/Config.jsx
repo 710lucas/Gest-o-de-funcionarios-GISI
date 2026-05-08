@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Trash2, RefreshCw, AlertTriangle, Database, Server, HardDrive } from 'lucide-react';
+import { Trash2, RefreshCw, AlertTriangle, Database, Server, HardDrive, Bot, Eye, EyeOff } from 'lucide-react';
 
 const Config = () => {
   const [showConfirmClear, setShowConfirmClear] = useState(false);
@@ -8,6 +8,15 @@ const Config = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [config, setConfig] = useState({ useApi: false, apiUrl: '' });
   const [apiUrl, setApiUrl] = useState('');
+  
+  // AI Config State
+  const [aiConfig, setAiConfig] = useState({
+    provider: 'gemini',
+    apiKey: '',
+    model: 'gemini-1.5-flash',
+    baseUrl: ''
+  });
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -22,8 +31,12 @@ const Config = () => {
 
   useEffect(() => {
     const currentConfig = api.getConfig();
+    const currentAIConfig = api.getAIConfig();
+    
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConfig(currentConfig);
     setApiUrl(currentConfig.apiUrl);
+    setAiConfig(currentAIConfig);
   }, []);
 
   const handleClearDatabase = () => {
@@ -59,6 +72,11 @@ const Config = () => {
     api.setApiConfig(config.useApi, apiUrl);
     setConfig({ ...config, apiUrl });
     alert('URL da API salva com sucesso!');
+  };
+
+  const handleSaveAIConfig = () => {
+    api.setAIConfig(aiConfig);
+    alert('Configurações de IA salvas com sucesso!');
   };
 
   return (
@@ -323,6 +341,99 @@ const Config = () => {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Card AI Integration Configuration */}
+        <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', borderLeft: '4px solid #8b5cf6' }}>
+          <div style={{ display: 'flex', alignItems: 'start', gap: '1rem', flexDirection: isMobile ? 'column' : 'row' }}>
+            <div style={{ backgroundColor: '#8b5cf620', padding: '0.75rem', borderRadius: '50%' }}>
+              <Bot size={isMobile ? 20 : 24} color="#8b5cf6" />
+            </div>
+            <div style={{ flex: 1, width: '100%' }}>
+              <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
+                Integração com IA
+              </h3>
+              <p style={{ color: '#6b7280', margin: '0.5rem 0', fontSize: isMobile ? '0.8rem' : '0.9rem' }}>
+                Configure o provedor de inteligência artificial para análise de dados.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', flexDirection: isMobile ? 'column' : 'row' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151', fontSize: '0.9rem' }}>
+                      Provedor:
+                    </label>
+                    <select
+                      value={aiConfig.provider}
+                      onChange={(e) => setAiConfig({ ...aiConfig, provider: e.target.value })}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                    >
+                      <option value="gemini">Google Gemini</option>
+                      <option value="openai">OpenAI</option>
+                      <option value="proxy">IA Proxy (Custom)</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151', fontSize: '0.9rem' }}>
+                      Modelo:
+                    </label>
+                    <input
+                      type="text"
+                      value={aiConfig.model}
+                      onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
+                      placeholder={aiConfig.provider === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o'}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151', fontSize: '0.9rem' }}>
+                    API Key:
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      value={aiConfig.apiKey}
+                      onChange={(e) => setAiConfig({ ...aiConfig, apiKey: e.target.value })}
+                      placeholder="Sua chave de API"
+                      style={{ width: '100%', padding: '0.5rem', paddingRight: '2.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}
+                    >
+                      {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                {(aiConfig.provider === 'proxy' || aiConfig.provider === 'openai') && (
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#374151', fontSize: '0.9rem' }}>
+                      Base URL / Proxy URL:
+                    </label>
+                    <input
+                      type="text"
+                      value={aiConfig.baseUrl}
+                      onChange={(e) => setAiConfig({ ...aiConfig, baseUrl: e.target.value })}
+                      placeholder={aiConfig.provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : 'https://seu-proxy.com/api'}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                    />
+                  </div>
+                )}
+
+                <button 
+                  className="btn btn-primary" 
+                  onClick={handleSaveAIConfig}
+                  style={{ backgroundColor: '#8b5cf6', alignSelf: isMobile ? 'stretch' : 'flex-start' }}
+                >
+                  Salvar Configuração de IA
+                </button>
+              </div>
             </div>
           </div>
         </div>
