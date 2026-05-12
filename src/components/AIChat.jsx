@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Send, Bot, Loader2, BarChart2, MessageSquare, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, Bot, Loader2, BarChart2, MessageSquare, AlertCircle, Settings, ExternalLink } from 'lucide-react';
 import { aiService } from '../services/ai';
+import { api } from '../services/api';
+import { Link } from 'react-router-dom';
 import { 
   BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell 
@@ -13,6 +15,7 @@ const AIChat = ({ isMobile }) => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [placeholder, setPlaceholder] = useState('');
+  const [isConfigured, setIsConfigured] = useState(true);
 
   const placeholders = [
     "Compare a quantidade de funcionários e a média salarial por departamento",
@@ -23,10 +26,18 @@ const AIChat = ({ isMobile }) => {
     "Qual o impacto salarial dos novos funcionários em 2025?"
   ];
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Escolhe um placeholder aleatório apenas ao montar o componente
     const randomIndex = Math.floor(Math.random() * placeholders.length);
     setPlaceholder(placeholders[randomIndex]);
+
+    // Verificar se a IA está configurada
+    const config = api.getAIConfig();
+    if (!config.apiKey && config.provider !== 'proxy') {
+      setIsConfigured(false);
+    } else {
+      setIsConfigured(true);
+    }
   }, []);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
@@ -165,33 +176,84 @@ const AIChat = ({ isMobile }) => {
         </div>
       </div>
 
+      {!isConfigured && (
+        <div style={{ 
+          backgroundColor: '#fff7ed', 
+          border: '1px solid #ffedd5', 
+          borderRadius: '8px', 
+          padding: '1rem', 
+          marginBottom: '1.5rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#9a3412' }}>
+            <AlertCircle size={20} />
+            <strong style={{ fontSize: '0.95rem' }}>Configuração Necessária</strong>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.875rem', color: '#c2410c', lineHeight: '1.5' }}>
+            A API Key não foi configurada. Para usar o assistente de IA, por favor vá até a aba de 
+            <strong> configurações</strong> e adicione sua chave.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <Link to="/configuracoes" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.4rem', 
+              fontSize: '0.875rem', 
+              color: '#8b5cf6', 
+              textDecoration: 'none',
+              fontWeight: '600'
+            }}>
+              <Settings size={16} />
+              Ir para Configurações
+            </Link>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.4rem', 
+              fontSize: '0.875rem', 
+              color: '#3b82f6', 
+              textDecoration: 'none',
+              fontWeight: '600'
+            }}>
+              <ExternalLink size={16} />
+              Obter API Key no Google AI Studio
+            </a>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={`Ex: ${placeholder}`}
+          placeholder={isConfigured ? `Ex: ${placeholder}` : "Configure a API Key para começar..."}
           style={{ 
             flex: 1, 
             padding: '0.75rem 1rem', 
             borderRadius: '8px', 
             border: '1px solid #d1d5db',
             fontSize: isMobile ? '0.875rem' : '1rem',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            backgroundColor: isConfigured ? '#fff' : '#f3f4f6',
+            cursor: isConfigured ? 'text' : 'not-allowed'
           }}
-          disabled={loading}
+          disabled={loading || !isConfigured}
         />
         <button 
           type="submit" 
           className="btn btn-primary"
           style={{ 
-            backgroundColor: '#8b5cf6', 
+            backgroundColor: isConfigured ? '#8b5cf6' : '#a78bfa', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            padding: '0.75rem 1.25rem'
+            padding: '0.75rem 1.25rem',
+            cursor: isConfigured ? 'pointer' : 'not-allowed'
           }}
-          disabled={loading || !query.trim()}
+          disabled={loading || !query.trim() || !isConfigured}
         >
           {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
         </button>
@@ -205,19 +267,31 @@ const AIChat = ({ isMobile }) => {
           <button
             key={i}
             type="button"
-            onClick={() => setQuery(p)}
+            onClick={() => isConfigured && setQuery(p)}
             style={{
               fontSize: '0.7rem',
               padding: '0.25rem 0.75rem',
               borderRadius: '999px',
               border: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb',
-              color: '#4b5563',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
+              backgroundColor: isConfigured ? '#f9fafb' : '#f3f4f6',
+              color: isConfigured ? '#4b5563' : '#9ca3af',
+              cursor: isConfigured ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s',
+              opacity: isConfigured ? 1 : 0.7
             }}
-            onMouseOver={(e) => { e.target.style.borderColor = '#8b5cf6'; e.target.style.color = '#8b5cf6'; }}
-            onMouseOut={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.color = '#4b5563'; }}
+            onMouseOver={(e) => { 
+              if (isConfigured) {
+                e.target.style.borderColor = '#8b5cf6'; 
+                e.target.style.color = '#8b5cf6'; 
+              }
+            }}
+            onMouseOut={(e) => { 
+              if (isConfigured) {
+                e.target.style.borderColor = '#e5e7eb'; 
+                e.target.style.color = '#4b5563'; 
+              }
+            }}
+            disabled={!isConfigured}
           >
             {p}
           </button>

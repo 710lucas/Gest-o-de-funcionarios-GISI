@@ -13,7 +13,7 @@ const Config = () => {
   const [aiConfig, setAiConfig] = useState({
     provider: 'gemini',
     apiKey: '',
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash',
     baseUrl: ''
   });
   const [showApiKey, setShowApiKey] = useState(false);
@@ -383,7 +383,7 @@ const Config = () => {
                       type="text"
                       value={aiConfig.model}
                       onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
-                      placeholder={aiConfig.provider === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o'}
+                      placeholder={aiConfig.provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o'}
                       style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
                     />
                   </div>
