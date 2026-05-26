@@ -206,5 +206,104 @@ export const aiService = {
       return data.response || 'Sem resposta do proxy.';
     }
     return '';
+  },
+
+  async callAI(config, systemPrompt, userPrompt) {
+    if (config.provider === 'gemini') {
+      return await this.callGemini(config, systemPrompt, userPrompt);
+    } else if (config.provider === 'openai') {
+      return await this.callOpenAI(config, systemPrompt, userPrompt);
+    } else if (config.provider === 'proxy') {
+      return await this.callProxy(config, systemPrompt, userPrompt);
+    }
+    throw new Error('Provedor de IA não suportado');
+  },
+
+  async generateReport(userPrompt) {
+    const config = api.getAIConfig();
+    if (!config.apiKey && config.provider !== 'proxy') {
+      throw new Error('API Key não configurada');
+    }
+
+    const allData = await api.getAll();
+    const dataSchema = {
+      entidade: 'funcionario',
+      campos: ['id', 'nome', 'cargo', 'departamento', 'salario', 'data_admissao']
+    };
+
+    const finalPrompt = userPrompt && userPrompt.trim() !== '' ? userPrompt : "Gere um relatório mensal padrão cobrindo panorama de pessoas, diversidade de cargos e análise salarial.";
+
+    const systemPrompt = `
+      Você é um Desenvolvedor Sênior e Analista de Dados. Gere o plano de um RELATÓRIO EXECUTIVO FORMAL.
+      Banco de dados (Array 'inputData'): ${JSON.stringify(dataSchema)}.
+      Objetivo: "${finalPrompt}"
+
+      RETORNE APENAS UM JSON NO FORMATO:
+      {
+        "reportTitle": "Título Formal",
+        "period": "Referência Temporal",
+        "queryScript": "CÓDIGO JS VÁLIDO. Recebe 'inputData'. Deve retornar um objeto com os datasets mapeados.",
+        "sections": [
+          {
+            "id": "s1",
+            "title": "Título da Seção",
+            "type": "chart", // 'chart' para gráficos ou 'cards' para métricas
+            "chartConfig": { // Obrigatório se type for 'chart'
+              "type": "bar", // bar, line, pie, area
+              "xAxis": "campo_x",
+              "dataKey": "valor",
+              "datasetName": "nome_no_objeto_de_retorno"
+            },
+            "metrics": [ // Obrigatório se type for 'cards'
+              { "label": "Título", "dataKey": "chave", "datasetName": "nome_no_objeto_de_retorno" }
+            ],
+            "insightPrompt": "Comando curto para análise destes dados."
+          }
+        ]
+      }
+
+      REGRAS CRÍTICAS DE ENGENHARIA:
+      1. SINTAXE JS: O 'queryScript' deve ser executável. NUNCA use espaços em nomes de variáveis (ex: use 'cargosUnicos' em vez de 'cargos Unicos').
+      2. FOCO EM GRÁFICOS: Para relatórios detalhados, priorize seções do tipo 'chart' para visualização de tendências e distribuições.
+      3. RETORNO DO SCRIPT: O script deve terminar com 'return { chave1: dado1, chave2: dado2 };'.
+      4. MAPEAMENTO: Garanta que 'datasetName' em cada seção corresponda exatamente a uma chave no objeto retornado pelo script.
+    `;
+
+    const reportPlanRaw = await this.callAI(config, systemPrompt, "");
+    
+    // Extração robusta de JSON (ignora textos extras e markdown)
+    const jsonMatch = reportPlanRaw.match(/\{[\s\S]*\}/);
+    const reportPlan = JSON.parse(jsonMatch ? jsonMatch[0] : reportPlanRaw);
+
+    // 2. Executar QueryScript
+    let datasets = {};
+    try {
+      // Usamos apenas 'inputData' como parâmetro para permitir que a IA declare 'const data = ...' sem erro de sintaxe
+      const executeQuery = new Function('inputData', `
+        ${reportPlan.queryScript.includes('return') ? reportPlan.queryScript : 'return ' + reportPlan.queryScript}
+      `);
+      datasets = executeQuery(allData);
+    } catch (e) {
+      console.error('Erro ao executar queryScript da IA:', e);
+      throw new Error('A IA gerou um script de consulta inválido.');
+    }
+
+    // 3. Obter Insights (textos) para cada seção
+    for (let section of reportPlan.sections) {
+      const sectionData = datasets[section.id] || datasets[section.chartConfig?.datasetName] || datasets[section.metrics?.[0]?.datasetName];
+      
+      const promptInsight = `
+        Atuando como analista executivo, gere um texto explicativo e objetivo (1 a 2 parágrafos).
+        Contexto: ${section.insightPrompt}
+        Dados encontrados: ${JSON.stringify(sectionData)}
+      `;
+
+      section.insight = await this.callAIForText(config, promptInsight);
+    }
+
+    return {
+      ...reportPlan,
+      datasets
+    };
   }
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users, Settings, FileText } from 'lucide-react';
 
 const Navbar = () => {
   const location = useLocation();
@@ -100,6 +100,26 @@ const Navbar = () => {
             <Users size={24} />
             <span>Lista</span>
           </Link>
+
+          <Link 
+            to="/relatorios" 
+            className={`nav-link-mobile ${isActive('/relatorios')}`}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem',
+              padding: '0.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/relatorios' ? '#3b82f6' : '#6b7280',
+              fontSize: '0.7rem',
+              fontWeight: '500',
+              flex: 1
+            }}
+          >
+            <FileText size={24} />
+            <span>Relatórios</span>
+          </Link>
           
           <Link 
             to="/configuracoes" 
@@ -141,6 +161,9 @@ const Navbar = () => {
           </Link>
           <Link to="/funcionarios" className={`nav-link ${isActive('/funcionarios')}`}>
             Funcionários
+          </Link>
+          <Link to="/relatorios" className={`nav-link ${isActive('/relatorios')}`}>
+            Relatórios
           </Link>
           <Link to="/configuracoes" className={`nav-link ${isActive('/configuracoes')}`}>
             Configurações

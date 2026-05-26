@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Cadastro from './pages/Cadastro';
 import ListaFuncionarios from './pages/ListaFuncionarios';
 import Config from './pages/Config';
+import Relatorios from './pages/Relatorios';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/cadastrar" element={<Cadastro />} />
         <Route path="/funcionarios" element={<ListaFuncionarios />} />
+        <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/configuracoes" element={<Config />} />
       </Routes>
     </BrowserRouter>
