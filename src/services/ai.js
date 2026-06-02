@@ -299,10 +299,25 @@ export const aiService = {
     // 2. Executar QueryScript
     let datasets = {};
     try {
-      const executeQuery = new Function('context', `
-        ${reportPlan.queryScript.includes('return') ? reportPlan.queryScript : 'return ' + reportPlan.queryScript}
-      `);
-      datasets = executeQuery({ funcionarios: allData, projetos: projects, alocacoes: allocations });
+      const scriptBody = reportPlan.queryScript.trim();
+      const contextObj = { funcionarios: allData, projetos: projects, alocacoes: allocations };
+
+      // Caso a IA tenha enviado uma arrow function ou definição de função
+      if (scriptBody.startsWith('(') || scriptBody.startsWith('context') || scriptBody.startsWith('function')) {
+        try {
+          const fn = new Function(`return ${scriptBody}`)();
+          datasets = fn(contextObj);
+        } catch (innerError) {
+          const finalScript = scriptBody.includes('return') ? scriptBody : `return ${scriptBody}`;
+          // Desestruturamos aqui para que a IA possa usar 'funcionarios', 'projetos', etc diretamente
+          const executeQuery = new Function('{ funcionarios, projetos, alocacoes }', finalScript);
+          datasets = executeQuery(contextObj);
+        }
+      } else {
+        const finalScript = scriptBody.includes('return') ? scriptBody : `return ${scriptBody}`;
+        const executeQuery = new Function('{ funcionarios, projetos, alocacoes }', finalScript);
+        datasets = executeQuery(contextObj);
+      }
     } catch (e) {
       console.error('Erro ao executar queryScript da IA:', e);
       throw new Error('A IA gerou um script de consulta inválido.');

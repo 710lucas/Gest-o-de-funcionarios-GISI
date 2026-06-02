@@ -69,25 +69,26 @@ const generateId = (data) => {
 };
 
 const generateDefaultData = () => {
-  const nomes = ['Ana Silva', 'Bruno Costa', 'Carlos Santos', 'Diana Oliveira', 'Eduardo Lima', 'Fernanda Souza', 'Gabriel Alves', 'Helena Rodrigues', 'Igor Pereira', 'Juliana Martins', 'Kevin Ferreira', 'Larissa Ribeiro', 'Marcos Carvalho', 'Natalia Gomes', 'Otávio Mendes', 'Paula Araújo', 'Rafael Barros', 'Sabrina Dias', 'Thiago Monteiro', 'Vanessa Cardoso', 'Wagner Teixeira', 'Yasmin Correia', 'André Barbosa', 'Beatriz Castro', 'Caio Pinto', 'Daniela Rocha', 'Elias Freitas', 'Flávia Moreira', 'Gustavo Ramos', 'Isabela Cunha', 'João Nascimento', 'Kamila Nunes', 'Leonardo Pires', 'Mariana Campos', 'Nicolas Viana', 'Olivia Azevedo', 'Pedro Duarte', 'Raquel Moura', 'Samuel Batista', 'Tatiana Melo', 'Ulisses Macedo', 'Vitória Rezende', 'William Lopes', 'Ximena Farias', 'Yuri Tavares', 'Zilda Medeiros', 'Alberto Fonseca', 'Bruna Guimarães', 'Cristiano Sales', 'Débora Xavier'];
+  const nomes = ['Ana Silva', 'Bruno Costa', 'Carlos Santos', 'Diana Oliveira', 'Eduardo Lima', 'Fernanda Souza', 'Gabriel Alves', 'Helena Rodrigues', 'Igor Pereira', 'Juliana Martins', 'Kevin Ferreira', 'Larissa Ribeiro', 'Marcos Carvalho', 'Natalia Gomes', 'Otávio Mendes', 'Paula Araújo', 'Rafael Barros', 'Sabrina Dias', 'Thiago Monteiro', 'Vanessa Cardoso', 'Wagner Teixeira', 'Yasmin Correia', 'André Barbosa', 'Beatriz Castro', 'Caio Pinto', 'Daniela Rocha', 'Elias Freitas', 'Flávia Moreira', 'Gustavo Ramos', 'Isabela Cunha', 'João Nascimento', 'Kamila Nunes', 'Leonardo Pires', 'Mariana Campos', 'Nicolas Viana', 'Olivia Azevedo', 'Pedro Duarte', 'Raquel Moura', 'Samuel Batista', 'Tatiana Melo', 'Ulisses Macedo', 'Vitória Rezende', 'William Lopes', 'Ximena Farias', 'Yuri Tavares', 'Zilda Medeiros', 'Alberto Fonseca', 'Bruna Guimarães', 'Cristiano Sales', 'Débora Xavier', 'Enzo Silva', 'Felipe Nunes', 'Giovanna Lima', 'Henrique Souza', 'Iris Machado', 'Jorge Viana', 'Karina Dias', 'Luiz Gonzaga', 'Marta Suplicy', 'Nelson Rodrigues', 'Olga Benário', 'Patrícia Pillar', 'Quirino Santos', 'Roberto Carlos', 'Simone Tebet', 'Tadeu Schmidt', 'Uriel Oliveira', 'Valéria Valenssa', 'Walcyr Carrasco', 'Xuxa Meneghel', 'Yago Pikachu', 'Zeca Pagodinho', 'Aline Barros', 'Belo Silva', 'Claudia Leitte', 'Daniela Mercury', 'Ed Motta', 'Fábio Jr', 'Gretchen Cantora', 'Humberto Gessinger', 'Ivete Sangalo', 'Jão Medeiros'];
   
   const departamentos = Object.keys(CARGOS_POR_DEPTO);
   
   const funcionarios = [];
-  for (let i = 0; i < 50; i++) {
-    const depto = departamentos[Math.floor(Math.random() * departamentos.length)];
+  // Aumentado para 80 funcionários para maior cobertura de skills
+  for (let i = 0; i < 80; i++) {
+    const depto = departamentos[i % departamentos.length]; // Distribuição equilibrada de depto
     const cargosDisponiveis = CARGOS_POR_DEPTO[depto];
     const cargo = cargosDisponiveis[Math.floor(Math.random() * cargosDisponiveis.length)];
     
-    const salarioBase = [3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12000, 15000];
-    const ano = 2020 + Math.floor(Math.random() * 6);
+    const salarioBase = [3000, 4500, 5500, 6800, 7500, 8200, 9500, 11000, 13500, 16000];
+    const ano = 2018 + Math.floor(Math.random() * 8);
     const mes = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
     const dia = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
     
     // Atribuir competências baseadas no cargo + Algumas Soft Skills
     let poolSkills = SKILLS_POR_CARGO[cargo] || SKILLS_POR_CARGO[cargo.split(' ')[0]] || COMPETENCIAS_PADRAO;
-    const numCompTech = 2 + Math.floor(Math.random() * 2);
-    const numCompSoft = 1 + Math.floor(Math.random() * 2);
+    const numCompTech = 3;
+    const numCompSoft = 2;
     
     const compFunc = [
       ...[...poolSkills].sort(() => 0.5 - Math.random()).slice(0, numCompTech),
@@ -96,12 +97,12 @@ const generateDefaultData = () => {
 
     funcionarios.push({
       id: i + 1,
-      nome: nomes[i],
+      nome: nomes[i] || `Profissional ${i+1}`,
       cargo: cargo,
       departamento: depto,
       salario: salarioBase[Math.floor(Math.random() * salarioBase.length)],
       data_admissao: `${ano}-${mes}-${dia}`,
-      competencias: compFunc,
+      competencias: [...new Set(compFunc)],
       carga_horaria_max: 40
     });
   }
@@ -110,36 +111,42 @@ const generateDefaultData = () => {
 
 const generateDefaultProjetos = (forceStress = false) => {
   const nomesProjetos = [
-    'Expansão de Infraestrutura Cloud', 'Novo App de Vendas Mobile', 'Portal de Transparência Financeira',
-    'Sistema de Recomendação IA', 'Reestruturação de Processos RH', 'Dashboard Executivo 2026',
-    'Migração de Banco de Dados Legacy', 'Plataforma de E-learning Interno', 'Integração de Pagamentos API',
-    'Redesign da Identidade Visual'
+    'Expansão Cloud AWS', 'App Vendas Mobile', 'Portal Transparência', 'Recomendação IA', 
+    'Processos RH v2', 'Dashboard 2026', 'Migração Legacy', 'E-learning Interno', 
+    'Integração Pagamentos', 'Redesign UI/UX', 'Fidelidade Clientes', 'Automação Industrial',
+    'Segurança Cibernética', 'Análise de Mercado', 'Treinamento Soft Skills'
   ];
 
-  const statusPossiveis = ['Em Planejamento', 'Iniciado', 'Pausado', 'Concluído'];
+  const statusPossiveis = ['Em Planejamento', 'Iniciado', 'Pausado'];
   const projetos = [];
+  
+  // Garantir que todas as competências padrão sejam solicitadas ao menos uma vez
+  const shuffledSkills = [...COMPETENCIAS_PADRAO].sort(() => 0.5 - Math.random());
+  const skillsPerProject = Math.ceil(shuffledSkills.length / 12);
 
-  for (let i = 0; i < (forceStress ? 8 : 5); i++) {
+  for (let i = 0; i < 12; i++) {
     const nome = nomesProjetos[i % nomesProjetos.length];
-
-    const numReqs = 2 + Math.floor(Math.random() * 2);
     const requisitos = [];
     
-    // Se for stress, insere competências raras ou inexistentes para gerar "Skill Gap"
-    const poolRealDeSkills = [...COMPETENCIAS_PADRAO].sort(() => 0.5 - Math.random());
+    // Pega um pedaço das skills padrão para este projeto
+    const startIdx = i * skillsPerProject;
+    const projectSkills = shuffledSkills.slice(startIdx, startIdx + skillsPerProject);
     
-    for (let j = 0; j < numReqs; j++) {
-      let competencia = poolRealDeSkills[j];
-      
-      // 20% de chance de exigir algo que ninguém tem se for cenário de stress
-      if (forceStress && Math.random() > 0.8) {
-        competencia = 'Computação Quântica'; 
-      }
-
+    // Adiciona as skills obrigatórias para cobertura
+    projectSkills.forEach(skill => {
       requisitos.push({
-        competencia,
+        competencia: skill,
         quantidade: 1 + Math.floor(Math.random() * 2),
-        esforço_por_pessoa: 10 + Math.floor(Math.random() * 3) * 10
+        esforço_por_pessoa: 10 + Math.floor(Math.random() * 2) * 10
+      });
+    });
+
+    // Se for stress, insere competências raras
+    if (forceStress && Math.random() > 0.6) {
+      requisitos.push({
+        competencia: 'Computação Quântica',
+        quantidade: 1,
+        esforço_por_pessoa: 20
       });
     }
 
@@ -147,7 +154,7 @@ const generateDefaultProjetos = (forceStress = false) => {
       id: i + 1,
       nome: forceStress ? `[CRÍTICO] ${nome}` : nome,
       descricao: `Iniciativa estratégica focada em ${nome.toLowerCase()}.`,
-      status: statusPossiveis[Math.floor(Math.random() * 2)],
+      status: statusPossiveis[Math.floor(Math.random() * 3)],
       requisitos
     });
   }
@@ -160,11 +167,10 @@ const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) =
 
   projetos.forEach(projeto => {
     projeto.requisitos.forEach(req => {
-      // No modo stress, tentamos alocar mais pessoas ou forçar esforço maior
-      const vagasParaPreencher = forceStress ? req.quantidade : Math.ceil(req.quantidade / 2);
+      // Tentar alocar mais pessoas para preencher a demanda
+      const vagasParaPreencher = req.quantidade;
       let alocadosCount = 0;
 
-      // Filtra candidatos, mas no modo stress ignoramos o limite de carga horária para alguns
       const candidatos = funcionarios.filter(f => {
         const temSkill = (f.competencias || []).includes(req.competencia);
         if (!temSkill) return false;
@@ -172,11 +178,12 @@ const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) =
         const esforcoAtual = esforcoOcupado[f.id] || 0;
         const limite = (f.carga_horaria_max || 40);
         
-        // Se for stress, permite ultrapassar o limite em 30% dos casos
-        if (forceStress && Math.random() > 0.7) return true;
-        
+        if (forceStress && Math.random() > 0.8) return true;
         return esforcoAtual + req.esforço_por_pessoa <= limite;
       });
+
+      // Ordenar candidatos por quem tem MENOS esforço atual para distribuir melhor
+      candidatos.sort((a, b) => (esforcoOcupado[a.id] || 0) - (esforcoOcupado[b.id] || 0));
 
       for (const cand of candidatos) {
         if (alocadosCount >= vagasParaPreencher) break;
@@ -307,8 +314,6 @@ export const api = {
     }
 
     // 2. Verificar se as novas entidades existem (Projetos e Alocações)
-    // Se a chave não existe (null), geramos os dados iniciais. 
-    // Se a chave existe mas é [] (vazia), o usuário limpou e isso é considerado VÁLIDO.
     if (localStorage.getItem(PROJETOS_KEY) === null) {
       const defaultProjetos = generateDefaultProjetos();
       localStorage.setItem(PROJETOS_KEY, JSON.stringify(defaultProjetos));

@@ -1,19 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import Papa from 'papaparse';
 import { api } from '../services/api';
-import { Users, Building, DollarSign, Calendar, Filter, TrendingUp, PieChart as PieChartIcon } from 'lucide-react';
-import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Users, Building, DollarSign, Calendar, Filter, TrendingUp, PieChart as PieChartIcon, RefreshCw, FileDown, Upload, AlertCircle, Briefcase } from 'lucide-react';
+import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
 import AIChat from '../components/AIChat';
 
 // eslint-disable-next-line no-unused-vars
 const StatCard = ({ title, value, icon: IconComponent, color, isMobile }) => (
-  <div className="stat-card" style={{ padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', backgroundColor: '#fff', display: 'flex', alignItems: 'center', gap: '1rem', transition: 'transform 0.2s', width: 'fit-content', flexGrow: '1' }}>
-    <div style={{ backgroundColor: `${color}20`, padding: isMobile ? '0.75rem' : '1rem', borderRadius: '50%', display : 'flex' }}>
-      <IconComponent size={isMobile ? 24 : 32} color={color} />
+  <div className="stat-card" style={{ 
+    padding: '1.5rem', 
+    borderRadius: '16px', 
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)', 
+    backgroundColor: '#fff', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '1.25rem', 
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    flex: '1 1 240px',
+    border: '1px solid #f1f5f9'
+  }}>
+    <div style={{ 
+      backgroundColor: `${color}15`, 
+      padding: '1rem', 
+      borderRadius: '12px', 
+      display : 'flex',
+      border: `1px solid ${color}30`
+    }}>
+      <IconComponent size={isMobile ? 24 : 28} color={color} />
     </div>
     <div style={{ flex: 1, minWidth: 0 }}>
-      <div className="stat-label" style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>{title}</div>
-      <div className="stat-value" style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 'bold', color: '#111827', wordWrap: 'break-word' }}>{value}</div>
+      <div className="stat-label" style={{ 
+        fontSize: '0.75rem', 
+        color: '#64748b', 
+        fontWeight: '700', 
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        marginBottom: '0.25rem'
+      }}>{title}</div>
+      <div className="stat-value" style={{ 
+        fontSize: isMobile ? '1.25rem' : '1.5rem', 
+        fontWeight: '800', 
+        color: '#0f172a', 
+        wordWrap: 'break-word',
+        lineHeight: '1.2'
+      }}>{value}</div>
     </div>
   </div>
 );
@@ -33,14 +63,22 @@ const Dashboard = () => {
     departamentoData: [],
     cargoData: [],
     salarioRangeData: [],
-    topSalarios: []
+    topSalarios: [],
+    projetoStatusData: [],
+    competencyData: []
   });
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
 
   const loadStats = async (departamento = '') => {
     try {
-      let data = await api.getAll();
+      const [allEmployees, allProjects, allAllocations] = await Promise.all([
+        api.getAll(),
+        api.getAllProjetos(),
+        api.getAllAlocacoes()
+      ]);
+      
+      let data = allEmployees || [];
       
       if (!Array.isArray(data)) {
         console.warn('Dados inválidos recebidos:', data);
@@ -123,11 +161,32 @@ const Dashboard = () => {
         salario: parseFloat(f.salario || 0)
       }));
 
+    // Projetos por Status
+    const projectStatusCount = {};
+    allProjects.forEach(p => {
+      projectStatusCount[p.status] = (projectStatusCount[p.status] || 0) + 1;
+    });
+    const projetoStatusData = Object.entries(projectStatusCount).map(([name, value]) => ({ name, value }));
+
+    // Top 8 Competências
+    const skillCount = {};
+    data.forEach(f => {
+      (f.competencias || []).forEach(s => {
+        skillCount[s] = (skillCount[s] || 0) + 1;
+      });
+    });
+    const competencyData = Object.entries(skillCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, value]) => ({ name, value }));
+
     setChartData({
       departamentoData,
       cargoData,
       salarioRangeData,
-      topSalarios
+      topSalarios,
+      projetoStatusData,
+      competencyData
     });
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
@@ -141,7 +200,9 @@ const Dashboard = () => {
         departamentoData: [],
         cargoData: [],
         salarioRangeData: [],
-        topSalarios: []
+        topSalarios: [],
+        projetoStatusData: [],
+        competencyData: []
       });
     }
   };
@@ -263,143 +324,225 @@ const Dashboard = () => {
 
       <AIChat isMobile={isMobile} />
 
-      <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginTop: '2rem' }}>
-        <h3 style={{ marginTop: 0, color: '#1f2937', fontSize: isMobile ? '1.1rem' : '1.25rem' }}>Ações Rápidas (Banco de Dados)</h3>
-        <div style={{ display: 'flex', gap: isMobile ? '0.5rem' : '1rem', marginTop: '1rem', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
-          <button className="btn btn-secondary" onClick={api.exportCsv} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-            <DollarSign size={16} /> Baixar CSV Atual
+      <div className="card" style={{ 
+        backgroundColor: '#fff', 
+        padding: '1.5rem', 
+        borderRadius: '16px', 
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', 
+        marginTop: '2rem',
+        border: '1px solid #f1f5f9',
+        background: 'linear-gradient(to right, #fff, #f8fafc)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <RefreshCw size={22} color="#6366f1" />
+          <h3 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem', fontWeight: '700' }}>Gestão de Dados</h3>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <button className="btn btn-secondary" onClick={api.exportCsv} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '0.6rem',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '10px',
+            fontWeight: '600'
+          }}>
+            <FileDown size={18} /> Exportar base atual
           </button>
           
-          <label className="btn btn-primary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+          <label className="btn btn-primary" style={{ 
+            cursor: 'pointer', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '0.6rem',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '10px',
+            fontWeight: '600',
+            backgroundColor: '#0f172a'
+          }}>
             <input 
               type="file" 
               accept=".csv" 
               onChange={handleImportCsv} 
               style={{ display: 'none' }} 
             />
-            <Users size={16} /> Importar CSV
+            <Upload size={18} /> Importar novo CSV
           </label>
         </div>
-        <p style={{ marginTop: '0.5rem', fontSize: isMobile ? '0.7rem' : '0.8rem', color: '#9ca3af' }}>
-            * Ao importar, os dados atuais serão substituídos pelos do arquivo.
+        <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>
+            <AlertCircle size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+            A importação substituirá permanentemente todos os registros atuais.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(500px, 1fr))', gap: isMobile ? '1rem' : '1.5rem', marginTop: isMobile ? '1rem' : '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(500px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
         
-        <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <Building size={isMobile ? 18 : 20} color="#3b82f6" />
-            <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1rem' : '1.25rem' }}>Funcionários por Departamento</h3>
+        <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <Building size={20} color="#3b82f6" />
+            <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem', fontWeight: '700' }}>Funcionários por Departamento</h3>
           </div>
-          <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData.departamentoData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: isMobile ? 10 : 12 }} angle={isMobile ? -45 : 0} textAnchor={isMobile ? 'end' : 'middle'} height={isMobile ? 60 : 30} />
-              <YAxis tick={{ fill: '#6b7280', fontSize: isMobile ? 10 : 12 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} axisLine={false} tickLine={false} height={40} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                formatter={(value) => [value, 'Funcionários']}
+                contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                cursor={{ fill: '#f8fafc' }}
               />
-              <Bar dataKey="funcionarios" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="funcionarios" fill="#3b82f6" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <PieChartIcon size={isMobile ? 18 : 20} color="#10b981" />
-            <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1rem' : '1.25rem' }}>Distribuição de Cargos</h3>
+        <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <PieChartIcon size={20} color="#10b981" />
+            <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem', fontWeight: '700' }}>Distribuição de Cargos</h3>
           </div>
-          <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+          <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
                 data={chartData.cargoData}
                 cx="50%"
                 cy="50%"
+                innerRadius={60}
+                outerRadius={90}
+                paddingAngle={5}
                 labelLine={false}
-                label={isMobile ? false : ({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={isMobile ? 70 : 100}
-                fill="#8884d8"
                 dataKey="value"
+                stroke="none"
               >
                 {chartData.cargoData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+              />
+              <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 500 }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <DollarSign size={isMobile ? 18 : 20} color="#f59e0b" />
-            <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1rem' : '1.25rem' }}>Faixas Salariais</h3>
+        <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <Briefcase size={20} color="#6366f1" />
+            <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem', fontWeight: '700' }}>Status dos Projetos</h3>
           </div>
-          <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={chartData.projetoStatusData}
+                cx="50%"
+                cy="50%"
+                innerRadius={0}
+                outerRadius={90}
+                paddingAngle={0}
+                dataKey="value"
+                stroke="#fff"
+                strokeWidth={2}
+                label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+              >
+                {chartData.projetoStatusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={['#6366f1', '#10b981', '#f59e0b', '#ef4444'][index % 4]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px', fontSize: '12px', fontWeight: 500 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <TrendingUp size={20} color="#ec4899" />
+            <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem', fontWeight: '700' }}>Radar de Competências</h3>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData.competencyData}>
+              <PolarGrid stroke="#f1f5f9" />
+              <PolarAngleAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600 }} />
+              <Radar
+                name="Profissionais"
+                dataKey="value"
+                stroke="#ec4899"
+                fill="#ec4899"
+                fillOpacity={0.5}
+              />
+              <Tooltip />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <DollarSign size={20} color="#f59e0b" />
+            <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem', fontWeight: '700' }}>Faixas Salariais</h3>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={chartData.salarioRangeData}>
               <defs>
                 <linearGradient id="colorQuantidade" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.1}/>
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="faixa" tick={{ fill: '#6b7280', fontSize: isMobile ? 8 : 10 }} angle={-45} textAnchor="end" height={isMobile ? 100 : 80} />
-              <YAxis tick={{ fill: '#6b7280', fontSize: isMobile ? 10 : 12 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="faixa" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} height={50} interval={0} angle={-15} textAnchor="end" />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                formatter={(value) => [value, 'Funcionários']}
+                contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
               />
-              <Area type="monotone" dataKey="quantidade" stroke="#f59e0b" fillOpacity={1} fill="url(#colorQuantidade)" />
+              <Area type="monotone" dataKey="quantidade" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorQuantidade)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <DollarSign size={isMobile ? 18 : 20} color="#8b5cf6" />
-            <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1rem' : '1.25rem' }}>Folha Salarial por Departamento</h3>
+        <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <DollarSign size={20} color="#8b5cf6" />
+            <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem', fontWeight: '700' }}>Custo por Departamento</h3>
           </div>
-          <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData.departamentoData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: isMobile ? 10 : 12 }} angle={isMobile ? -45 : 0} textAnchor={isMobile ? 'end' : 'middle'} height={isMobile ? 60 : 30} />
-              <YAxis tick={{ fill: '#6b7280', fontSize: isMobile ? 10 : 12 }} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} height={40} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                formatter={(value) => [formatCurrency(value), 'Total']}
+                contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                formatter={(value) => [formatCurrency(value), 'Custo Total']}
               />
-              <Legend wrapperStyle={{ fontSize: isMobile ? '0.75rem' : '1rem' }} />
-              <Line type="monotone" dataKey="salarioTotal" stroke="#8b5cf6" strokeWidth={isMobile ? 2 : 3} dot={{ r: isMobile ? 3 : 5 }} activeDot={{ r: isMobile ? 5 : 8 }} name="Salário Total" />
+              <Line type="monotone" dataKey="salarioTotal" stroke="#8b5cf6" strokeWidth={4} dot={{ r: 4, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, strokeWidth: 0 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="card" style={{ backgroundColor: '#fff', padding: isMobile ? '1rem' : '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginTop: isMobile ? '1rem' : '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <TrendingUp size={isMobile ? 18 : 20} color="#ef4444" />
-          <h3 style={{ margin: 0, color: '#1f2937', fontSize: isMobile ? '1rem' : '1.25rem' }}>Top 10 Maiores Salários</h3>
+      <div className="card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', marginTop: '2rem', border: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <TrendingUp size={20} color="#6366f1" />
+          <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.25rem', fontWeight: '700' }}>Ranking de Maiores Salários</h3>
         </div>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: isMobile ? '0.875rem' : '1rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.5rem' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
-                <th style={{ padding: isMobile ? '0.5rem' : '0.75rem', textAlign: 'left', color: '#374151', fontWeight: '600' }}>#</th>
-                <th style={{ padding: isMobile ? '0.5rem' : '0.75rem', textAlign: 'left', color: '#374151', fontWeight: '600' }}>Nome</th>
-                {!isMobile && <th style={{ padding: '0.75rem', textAlign: 'left', color: '#374151', fontWeight: '600' }}>Cargo</th>}
-                <th style={{ padding: isMobile ? '0.5rem' : '0.75rem', textAlign: 'right', color: '#374151', fontWeight: '600' }}>Salário</th>
+              <tr>
+                <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase' }}>#</th>
+                <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase' }}>Profissional</th>
+                {!isMobile && <th style={{ padding: '1rem', textAlign: 'left', color: '#64748b', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase' }}>Cargo</th>}
+                <th style={{ padding: '1rem', textAlign: 'right', color: '#64748b', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase' }}>Vencimentos</th>
               </tr>
             </thead>
             <tbody>
               {chartData.topSalarios.map((func, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={{ padding: isMobile ? '0.5rem' : '0.75rem', color: '#6b7280' }}>{index + 1}</td>
-                  <td style={{ padding: isMobile ? '0.5rem' : '0.75rem', color: '#111827', fontWeight: '500' }}>{func.nome}</td>
-                  {!isMobile && <td style={{ padding: '0.75rem', color: '#6b7280' }}>{func.cargo}</td>}
-                  <td style={{ padding: isMobile ? '0.5rem' : '0.75rem', color: '#10b981', fontWeight: '600', textAlign: 'right' }}>
+                <tr key={index} style={{ backgroundColor: '#f8fafc', transition: 'transform 0.2s' }}>
+                  <td style={{ padding: '1rem', borderRadius: '12px 0 0 12px', color: '#94a3b8', fontWeight: '700' }}>{index + 1}</td>
+                  <td style={{ padding: '1rem', color: '#0f172a', fontWeight: '700' }}>{func.nome}</td>
+                  {!isMobile && <td style={{ padding: '1rem', color: '#64748b', fontWeight: '500' }}>{func.cargo}</td>}
+                  <td style={{ padding: '1rem', borderRadius: '0 12px 12px 0', color: '#10b981', fontWeight: '800', textAlign: 'right' }}>
                     {formatCurrency(func.salario)}
                   </td>
                 </tr>

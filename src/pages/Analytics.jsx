@@ -200,19 +200,34 @@ const Analytics = () => {
               </div>
             </div>
             
-            <div style={{ height: '420px' }}>
+          <div style={{ 
+            height: '420px', 
+            overflowY: 'auto', 
+            paddingRight: '0.5rem',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#cbd5e1 transparent'
+          }}>
+            <div style={{ height: `${Math.max(420, data.occupancyBySkill.length * 35)}px`, width: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.occupancyBySkill} layout="vertical" margin={{ left: 10, right: 30, top: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                   <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} axisLine={false} tickLine={false} interval={0} />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    width={110} 
+                    tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    interval={0}
+                  />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const s = payload[0].payload;
                         return (
-                          <div style={{ backgroundColor: '#1e293b', color: '#fff', padding: '1rem', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: 'none' }}>
+                          <div style={{ backgroundColor: '#1e293b', color: '#fff', padding: '1rem', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: 'none', zIndex: 100 }}>
                             <strong style={{ display: 'block', marginBottom: '0.5rem', borderBottom: '1px solid #334155', paddingBottom: '0.5rem' }}>{s.name}</strong>
                             <div style={{ fontSize: '0.85rem' }}>
                               <p style={{ margin: '0 0 0.25rem 0', color: '#94a3b8' }}>Capacidade: <span style={{ color: '#fff', fontWeight: 'bold' }}>{(s.ocupado + s.livre).toFixed(1)}h</span></p>
@@ -227,7 +242,7 @@ const Analytics = () => {
                       return null;
                     }}
                   />
-                  <Bar dataKey="ocupado" stackId="a" radius={[0, 0, 0, 0]}>
+                  <Bar dataKey="ocupado" stackId="a" barSize={18}>
                     {data.occupancyBySkill.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`} 
@@ -235,10 +250,11 @@ const Analytics = () => {
                       />
                     ))}
                   </Bar>
-                  <Bar dataKey="livre" stackId="a" fill="#f1f5f9" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="livre" stackId="a" fill="#f1f5f9" radius={[0, 6, 6, 0]} barSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          </div>
           </div>
 
           {/* Card Disponibilidade de Time */}

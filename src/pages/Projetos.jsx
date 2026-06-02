@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Briefcase, Plus, Users, AlertTriangle, CheckCircle, Search, Trash2, Edit3, ClipboardList, TrendingUp, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Briefcase, Plus, Users, AlertTriangle, CheckCircle, Search, Trash2, Edit3, ClipboardList, TrendingUp, ChevronDown, ChevronUp, X, RefreshCw, Save } from 'lucide-react';
 
 const Projetos = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ const Projetos = () => {
   const [editingProjeto, setEditingProjeto] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [collapsedProjects, setCollapsedProjects] = useState({});
+  const [loadingModal, setLoadingModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
   const toggleCollapse = (id) => {
@@ -69,15 +70,23 @@ const Projetos = () => {
 
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
-    if (editingProjeto) {
-      await api.updateProjeto(editingProjeto.id, projetoForm);
-    } else {
-      await api.createProjeto(projetoForm);
+    setLoadingModal(true);
+    try {
+      if (editingProjeto) {
+        await api.updateProjeto(editingProjeto.id, projetoForm);
+      } else {
+        await api.createProjeto(projetoForm);
+      }
+      setShowModal(false);
+      setEditingProjeto(null);
+      setProjetoForm({ nome: '', descricao: '', status: 'Em Planejamento', requisitos: [] });
+      await fetchData();
+    } catch (error) {
+      console.error('Erro ao salvar projeto:', error);
+      alert('Erro ao salvar projeto.');
+    } finally {
+      setLoadingModal(false);
     }
-    setShowModal(false);
-    setEditingProjeto(null);
-    setProjetoForm({ nome: '', descricao: '', status: 'Em Planejamento', requisitos: [] });
-    fetchData();
   };
 
   const addRequisito = () => {
@@ -206,7 +215,11 @@ const Projetos = () => {
           <h1 style={{ margin: 0, fontSize: isMobile ? '1.5rem' : '2rem' }}>Gestão de Projetos</h1>
           <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>Planejamento de capacidade e alocação de recursos</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={() => {
+          setEditingProjeto(null);
+          setProjetoForm({ nome: '', descricao: '', status: 'Em Planejamento', requisitos: [] });
+          setShowModal(true);
+        }}>
           <Plus size={20} /> Novo Projeto
         </button>
       </div>
@@ -579,95 +592,162 @@ const Projetos = () => {
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="modal-content" style={{ maxWidth: '600px', padding: isMobile ? '1.5rem' : '2rem' }}>
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !loadingModal && setShowModal(false)}>
+          <div className="modal-content">
             <div className="modal-header">
-              <h2 style={{ margin: 0 }}>{editingProjeto ? 'Editar Projeto' : 'Novo Projeto'}</h2>
+              <h2>{editingProjeto ? 'Detalhes do Projeto' : 'Arquitetar Novo Projeto'}</h2>
               <button className="close-btn" onClick={() => setShowModal(false)}>&times;</button>
             </div>
-            <form onSubmit={handleCreateOrUpdate}>
-              <div className="form-group">
-                <label className="form-label">Nome do Projeto</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  value={projetoForm.nome} 
-                  onChange={e => setProjetoForm({...projetoForm, nome: e.target.value})} 
-                  placeholder="Ex: Novo App Mobile"
-                  required 
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Descrição</label>
-                <textarea 
-                  className="form-input" 
-                  value={projetoForm.descricao} 
-                  onChange={e => setProjetoForm({...projetoForm, descricao: e.target.value})} 
-                  rows="2"
-                  placeholder="Breve descrição do objetivo do projeto..."
-                ></textarea>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Status</label>
-                <select 
-                  className="form-input" 
-                  value={projetoForm.status} 
-                  onChange={e => setProjetoForm({...projetoForm, status: e.target.value})}
-                >
-                  <option>Em Planejamento</option>
-                  <option>Iniciado</option>
-                  <option>Pausado</option>
-                  <option>Concluído</option>
-                </select>
-              </div>
+            
+            <form onSubmit={handleCreateOrUpdate} style={{ 
+              maxHeight: '75vh',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              padding: '0.5rem'
+            }}>
+              <div className="form-grid">
+                <div className="form-group" style={{ gridColumn: isMobile ? 'span 1' : 'span 2' }}>
+                  <label className="form-label">Nome do Projeto</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    value={projetoForm.nome} 
+                    onChange={e => setProjetoForm({...projetoForm, nome: e.target.value})} 
+                    placeholder="Ex: Transformação Digital 2026"
+                    required 
+                  />
+                </div>
 
-              <div style={{ marginTop: '1.5rem', backgroundColor: '#f9fafb', padding: '1rem', borderRadius: '8px', border: '1px solid #eee' }}>
-                <label className="form-label" style={{ marginBottom: '1rem' }}>Definição de Requisitos (Skills)</label>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <div className="form-group" style={{ gridColumn: isMobile ? 'span 1' : 'span 2' }}>
+                  <label className="form-label">Missão e Objetivos</label>
+                  <textarea 
+                    className="form-input" 
+                    value={projetoForm.descricao} 
+                    onChange={e => setProjetoForm({...projetoForm, descricao: e.target.value})} 
+                    rows="3"
+                    placeholder="Descreva o impacto esperado desta iniciativa..."
+                    style={{ resize: 'vertical' }}
+                  ></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Status Operacional</label>
                   <select 
                     className="form-input" 
-                    style={{ flex: 2, minWidth: '150px' }}
-                    value={newRequisito.competencia} 
-                    onChange={e => setNewRequisito({...newRequisito, competencia: e.target.value})}
+                    value={projetoForm.status} 
+                    onChange={e => setProjetoForm({...projetoForm, status: e.target.value})}
                   >
-                    <option value="">Competência...</option>
-                    {api.getCompetenciasPadrao().map(c => <option key={c} value={c}>{c}</option>)}
+                    <option>Em Planejamento</option>
+                    <option>Iniciado</option>
+                    <option>Pausado</option>
+                    <option>Concluído</option>
                   </select>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '1.5rem' }}>
+                <label className="form-label">Definição de Requisitos (Skills)</label>
+                
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '0.5rem',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  padding: '1rem',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px solid #f1f5f9',
+                  marginBottom: '1rem',
+                  scrollbarWidth: 'thin'
+                }}>
+                  {projetoForm.requisitos.map((req, idx) => (
+                    <div key={idx} style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      padding: '0.75rem 1rem', 
+                      backgroundColor: '#fff', 
+                      borderRadius: '8px', 
+                      border: '1px solid #e2e8f0'
+                    }}>
+                      <div>
+                        <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.9rem' }}>{req.competencia}</span>
+                        <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#64748b' }}>
+                          ({req.quantidade}x • {req.esforço_por_pessoa}h)
+                        </span>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => removeRequisito(idx)} 
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem' }}
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                  {projetoForm.requisitos.length === 0 && (
+                    <div style={{ textAlign: 'center', color: '#94a3b8', fontStyle: 'italic', fontSize: '0.85rem' }}>
+                      Nenhum requisito técnico definido.
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  <div style={{ flex: 2, minWidth: '150px' }}>
+                    <input 
+                      list="competencias-projeto"
+                      className="form-input" 
+                      value={newRequisito.competencia} 
+                      onChange={e => setNewRequisito({...newRequisito, competencia: e.target.value})}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addRequisito())}
+                      placeholder="Skill..."
+                    />
+                    <datalist id="competencias-projeto">
+                      {api.getCompetenciasPadrao().map(c => <option key={c} value={c} />)}
+                    </datalist>
+                  </div>
                   <input 
                     type="number" 
                     className="form-input" 
-                    style={{ flex: 0.5, minWidth: '70px' }} 
+                    style={{ flex: 0.5, minWidth: '60px' }} 
                     placeholder="Qtd" 
                     value={newRequisito.quantidade} 
                     onChange={e => setNewRequisito({...newRequisito, quantidade: parseInt(e.target.value)})} 
-                    min="1"
                   />
                   <input 
                     type="number" 
                     className="form-input" 
-                    style={{ flex: 0.8, minWidth: '80px' }} 
+                    style={{ flex: 0.5, minWidth: '60px' }} 
                     placeholder="Horas" 
                     value={newRequisito.esforço_por_pessoa} 
                     onChange={e => setNewRequisito({...newRequisito, esforço_por_pessoa: parseInt(e.target.value)})} 
-                    min="1"
                   />
-                  <button type="button" className="btn btn-secondary" onClick={addRequisito} style={{ height: '44px' }}>Add</button>
-                </div>
-
-                <div className="skills-container">
-                  {projetoForm.requisitos.map((req, idx) => (
-                    <span key={idx} className="skill-tag" style={{ background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-                      <strong>{req.competencia}</strong>: {req.quantidade}x ({req.esforço_por_pessoa}h)
-                      <button type="button" onClick={() => removeRequisito(idx)} className="remove-skill">&times;</button>
-                    </span>
-                  ))}
-                  {projetoForm.requisitos.length === 0 && <span style={{ fontSize: '0.8rem', color: '#9ca3af', fontStyle: 'italic' }}>Nenhum requisito adicionado.</span>}
+                  <button type="button" className="btn btn-secondary" onClick={addRequisito} style={{ height: '42px' }}>
+                    <Plus size={18} />
+                  </button>
                 </div>
               </div>
 
-              <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                <button type="submit" className="btn btn-success" style={{ flex: 1 }}>{editingProjeto ? 'Salvar Alterações' : 'Criar Projeto'}</button>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} style={{ flex: 1 }}>Cancelar</button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '2rem' }}>
+                <button 
+                  type="submit" 
+                  className="btn btn-success" 
+                  disabled={loadingModal}
+                  style={{ backgroundColor: '#22c55e', color: 'white', flex: 1 }}
+                >
+                  {loadingModal ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                  {editingProjeto ? 'Salvar Alterações' : 'Criar Projeto'}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setShowModal(false)}
+                  disabled={loadingModal}
+                  style={{ flex: 1 }}
+                >
+                  Cancelar
+                </button>
               </div>
             </form>
           </div>
