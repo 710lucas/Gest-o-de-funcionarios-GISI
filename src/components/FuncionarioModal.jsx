@@ -180,17 +180,21 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
             
             {isEditing && (
               <div className="add-skill-box" style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
-                <select 
+                <input 
+                  list="competencias-sugeridas"
                   className="form-input" 
                   value={newSkill} 
                   onChange={(e) => setNewSkill(e.target.value)}
-                >
-                  <option value="">Selecionar Competência...</option>
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
+                  placeholder="Digitar ou selecionar skill..."
+                  style={{ flex: 1 }}
+                />
+                <datalist id="competencias-sugeridas">
                   {competenciasDisponiveis
                     .filter(c => !formData.competencias?.includes(c))
-                    .map(c => <option key={c} value={c}>{c}</option>)
+                    .map(c => <option key={c} value={c} />)
                   }
-                </select>
+                </datalist>
                 <button 
                   type="button" 
                   className="btn btn-secondary" 

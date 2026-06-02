@@ -9,6 +9,7 @@ const Analytics = () => {
     occupancyBySkill: [],
     globalAvailability: [],
     overloadedEmployees: [],
+    strategicInsights: [],
     stats: { totalHours: 0, allocatedHours: 0, avgOccupancy: 0 }
   });
   const [isMobile, setIsMobile] = useState(false);
@@ -43,8 +44,7 @@ const Analytics = () => {
       funcs.forEach(f => {
         (f.competencias || []).forEach(s => {
           if (skillStats[s]) {
-            // Dividimos a carga horária do funcionário pelo número de skills dele para uma estimativa justa de potencial
-            skillStats[s].total += f.carga_horaria_max / f.competencias.length;
+            skillStats[s].total += f.carga_horaria_max / (f.competencias.length || 1);
           }
         });
       });
@@ -80,10 +80,31 @@ const Analytics = () => {
         .map(f => ({
           ...f,
           effort: employeeEffort[f.id] || 0,
-          percent: Math.round(((employeeEffort[f.id] || 0) / f.carga_horaria_max) * 100)
+          percent: Math.round(((employeeEffort[f.id] || 0) / (f.carga_horaria_max || 40)) * 100)
         }))
         .filter(f => f.percent > 100)
         .sort((a, b) => b.percent - a.percent);
+
+      // 4. Insights Estratégicos
+      const strategicInsights = occupancyBySkill.map(s => {
+        if (s.percent >= 80) {
+          return {
+            skill: s.name,
+            type: 'danger',
+            message: `Ocupação Crítica (${s.percent}%). Considere contratar mais especialistas ou expandir prazos.`,
+            icon: '⚠️'
+          };
+        }
+        if (s.percent > 0 && s.percent <= 30) {
+          return {
+            skill: s.name,
+            type: 'warning',
+            message: `Capacidade Ociosa (${s.percent}%). Profissionais podem ser realocados ou a demanda está baixa.`,
+            icon: '💡'
+          };
+        }
+        return null;
+      }).filter(Boolean);
 
       setData({
         occupancyBySkill,
@@ -92,6 +113,7 @@ const Analytics = () => {
           { name: 'Disponível', value: Math.max(0, totalHours - allocatedHours), fill: '#e5e7eb' }
         ],
         overloadedEmployees,
+        strategicInsights,
         stats: {
           totalHours,
           allocatedHours,
@@ -104,8 +126,6 @@ const Analytics = () => {
       setLoading(false);
     }
   };
-
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   if (loading) return <div className="container" style={{ textAlign: 'center', padding: '5rem' }}>Gerando inteligência de dados...</div>;
 
@@ -142,9 +162,19 @@ const Analytics = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
         <div className="card" style={{ padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Users size={20} color="#3b82f6" /> Ocupação por Competência (Horas)
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+              <Users size={20} color="#3b82f6" /> Ocupação por Competência (Horas)
+            </h3>
+            <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '2px' }}></div> Crítico (&gt;80%)
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <div style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '2px' }}></div> Alerta (&lt;30%)
+              </span>
+            </div>
+          </div>
           <div style={{ height: '400px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.occupancyBySkill} layout="vertical">
@@ -153,11 +183,34 @@ const Analytics = () => {
                 <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} interval={0} />
                 <Tooltip 
                   cursor={{ fill: '#f9fafb' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const s = payload[0].payload;
+                      return (
+                        <div style={{ backgroundColor: '#fff', padding: '0.75rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+                          <strong style={{ display: 'block', marginBottom: '0.25rem' }}>{s.name}</strong>
+                          <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>
+                            <p style={{ margin: 0 }}>Capacidade: {(s.ocupado + s.livre).toFixed(1)}h</p>
+                            <p style={{ margin: 0 }}>Alocado: {s.ocupado}h</p>
+                            <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: s.percent >= 80 ? '#ef4444' : s.percent <= 30 ? '#f59e0b' : '#3b82f6' }}>
+                              Uso: {s.percent}%
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
-                <Legend />
-                <Bar dataKey="ocupado" name="Horas Alocadas" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="livre" name="Capacidade Ociosa" stackId="a" fill="#e5e7eb" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="ocupado" stackId="a" radius={[0, 0, 0, 0]}>
+                  {data.occupancyBySkill.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.percent >= 80 ? '#ef4444' : entry.percent <= 30 ? '#f59e0b' : '#3b82f6'} 
+                    />
+                  ))}
+                </Bar>
+                <Bar dataKey="livre" name="Capacidade Ociosa" stackId="a" fill="#f1f5f9" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -195,6 +248,46 @@ const Analytics = () => {
         </div>
       </div>
 
+      {/* Insights Estratégicos */}
+      <div className="card" style={{ padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
+        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <TrendingUp size={20} color="#8b5cf6" /> Recomendações Estratégicas
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+          {data.strategicInsights.length > 0 ? (
+            data.strategicInsights.map((insight, idx) => (
+              <div 
+                key={idx} 
+                style={{ 
+                  padding: '1rem', 
+                  borderRadius: '10px', 
+                  backgroundColor: insight.type === 'danger' ? '#fef2f2' : '#fffbeb',
+                  borderLeft: `4px solid ${insight.type === 'danger' ? '#ef4444' : '#f59e0b'}`,
+                  display: 'flex',
+                  gap: '0.75rem',
+                  alignItems: 'flex-start'
+                }}
+              >
+                <span style={{ fontSize: '1.25rem' }}>{insight.icon}</span>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.9rem', color: insight.type === 'danger' ? '#991b1b' : '#92400e', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                    {insight.skill}
+                  </strong>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: insight.type === 'danger' ? '#b91c1c' : '#b45309', lineHeight: '1.4' }}>
+                    {insight.message}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+              <CheckCircle size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+              <p>Capacidade operacional equilibrada. Nenhuma ação recomendada no momento.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="card" style={{ padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
         <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: data.overloadedEmployees.length > 0 ? '#ef4444' : '#111827' }}>
           <AlertTriangle size={20} /> Atenção: Funcionários com Sobrecarga
@@ -227,7 +320,7 @@ const Analytics = () => {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <div style={{ flex: 1, height: '8px', background: '#fee2e2', borderRadius: '4px', minWidth: '60px' }}>
-                          <div style={{ height: '100%', background: '#ef4444', width: '100%', borderRadius: '4px' }}></div>
+                          <div style={{ height: '100%', background: '#ef4444', width: `${Math.min(100, f.percent)}%`, borderRadius: '4px' }}></div>
                         </div>
                         <span>{f.percent}%</span>
                       </div>
