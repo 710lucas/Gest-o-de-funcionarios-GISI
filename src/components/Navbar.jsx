@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, Users, Settings, FileText } from 'lucide-react';
+import { LayoutDashboard, UserPlus, Users, Settings, FileText, Briefcase, Activity } from 'lucide-react';
 
 const Navbar = () => {
   const location = useLocation();
@@ -61,26 +61,6 @@ const Navbar = () => {
           </Link>
           
           <Link 
-            to="/cadastrar" 
-            className={`nav-link-mobile ${isActive('/cadastrar')}`}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.25rem',
-              padding: '0.5rem',
-              textDecoration: 'none',
-              color: location.pathname === '/cadastrar' ? '#3b82f6' : '#6b7280',
-              fontSize: '0.7rem',
-              fontWeight: '500',
-              flex: 1
-            }}
-          >
-            <UserPlus size={24} />
-            <span>Novo</span>
-          </Link>
-          
-          <Link 
             to="/funcionarios" 
             className={`nav-link-mobile ${isActive('/funcionarios')}`}
             style={{
@@ -98,12 +78,12 @@ const Navbar = () => {
             }}
           >
             <Users size={24} />
-            <span>Lista</span>
+            <span>Equipe</span>
           </Link>
 
           <Link 
-            to="/relatorios" 
-            className={`nav-link-mobile ${isActive('/relatorios')}`}
+            to="/projetos" 
+            className={`nav-link-mobile ${isActive('/projetos')}`}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -111,14 +91,34 @@ const Navbar = () => {
               gap: '0.25rem',
               padding: '0.5rem',
               textDecoration: 'none',
-              color: location.pathname === '/relatorios' ? '#3b82f6' : '#6b7280',
+              color: location.pathname === '/projetos' ? '#3b82f6' : '#6b7280',
               fontSize: '0.7rem',
               fontWeight: '500',
               flex: 1
             }}
           >
-            <FileText size={24} />
-            <span>Relatórios</span>
+            <Briefcase size={24} />
+            <span>Projetos</span>
+          </Link>
+
+          <Link 
+            to="/analytics" 
+            className={`nav-link-mobile ${isActive('/analytics')}`}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem',
+              padding: '0.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/analytics' ? '#3b82f6' : '#6b7280',
+              fontSize: '0.7rem',
+              fontWeight: '500',
+              flex: 1
+            }}
+          >
+            <Activity size={24} />
+            <span>Analytics</span>
           </Link>
           
           <Link 
@@ -161,6 +161,12 @@ const Navbar = () => {
           </Link>
           <Link to="/funcionarios" className={`nav-link ${isActive('/funcionarios')}`}>
             Funcionários
+          </Link>
+          <Link to="/projetos" className={`nav-link ${isActive('/projetos')}`}>
+            Projetos
+          </Link>
+          <Link to="/analytics" className={`nav-link ${isActive('/analytics')}`}>
+            Analytics
           </Link>
           <Link to="/relatorios" className={`nav-link ${isActive('/relatorios')}`}>
             Relatórios

@@ -53,6 +53,12 @@ const Config = () => {
     window.location.reload();
   };
 
+  const handleGenerateStressScenario = () => {
+    api.generateStressScenario();
+    alert('Cenário de stress gerado com sucesso! Verifique a sobrecarga no Dashboard e Projetos.');
+    window.location.reload();
+  };
+
   const handleToggleDataSource = (useApi) => {
     if (useApi && !apiUrl) {
       alert('Por favor, informe a URL da API antes de ativar esta opção.');
@@ -228,20 +234,34 @@ const Config = () => {
                 Esta ação não pode ser desfeita.
               </p>
               {!showConfirmReset ? (
-                <button 
-                  className="btn btn-primary" 
-                  onClick={() => setShowConfirmReset(true)}
-                  style={{ 
-                    marginTop: '1rem', 
-                    backgroundColor: '#10b981', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.5rem' 
-                  }}
-                >
-                  <RefreshCw size={16} />
-                  Resetar Base de Dados
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => setShowConfirmReset(true)}
+                    style={{ 
+                      backgroundColor: '#10b981', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem' 
+                    }}
+                  >
+                    <RefreshCw size={16} />
+                    Resetar Base Padrão
+                  </button>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={handleGenerateStressScenario}
+                    style={{ 
+                      backgroundColor: '#f59e0b', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem' 
+                    }}
+                  >
+                    <AlertTriangle size={16} />
+                    Gerar Cenário de Stress
+                  </button>
+                </div>
               ) : (
                 <div style={{ 
                   marginTop: '1rem', 

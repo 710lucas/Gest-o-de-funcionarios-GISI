@@ -10,7 +10,9 @@ const Cadastro = () => {
         cargo: '',
         departamento: '',
         salario: '',
-        data_admissao: ''
+        data_admissao: '',
+        competencias: [],
+        carga_horaria_max: 40
     });
 
     useEffect(() => {
