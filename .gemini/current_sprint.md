@@ -1,26 +1,26 @@
-# Current Sprint: Sprint 7 - Refinamento de UI/UX e Polimento (CONCLUÍDA)
+# Current Sprint: Sprint 8 - Recuperação e Robustez da IA (CONCLUÍDA)
 
 ## Meta da Sprint
-Elevar a qualidade visual e a experiência do usuário nas seções de Projetos e Gaps de Skill, focando em clareza, feedback interativo e estética moderna.
+Restaurar a funcionalidade de geração de gráficos no assistente de IA do dashboard, garantindo que o retorno seja estruturado e que a execução de scripts seja robusta a variações de resposta da IA.
 
 ## Tarefas
 
-- [x] **1. Fundações de Estilo (index.css)**
-  - *Descrição:* Implementar transições globais, novos designs de badges e animações de entrada para modais.
-  - *Condição de Aceite:* Interface mais fluida e moderna.
+- [x] **1. Refinamento de Prompt e Schema (`src/services/ai.js`)**
+  - *Descrição:* Atualizar o schema de dados para incluir `data_admissao` e tornar o system prompt explícito sobre a estrutura de `charts`.
+  - *Condição de Aceite:* IA retorna JSON com todos os campos necessários para renderização.
 
-- [x] **2. Polimento da Gestão de Projetos**
-  - *Descrição:* Redesenhar os cards de projeto, melhorar o matching visual e os alertas de sobrecarga.
-  - *Condição de Aceite:* Visualização de alocação mais clara e intuitiva.
+- [x] **2. Robustez na Execução de Scripts (`src/services/ai.js`)**
+  - *Descrição:* Implementar lógica para garantir que o `queryScript` tenha um `return` e trate strings de script puras.
+  - *Condição de Aceite:* Scripts sem "return" explícito na resposta da IA funcionam corretamente.
 
-- [x] **3. Polimento da Página de Skill Gaps**
-  - *Descrição:* Melhorar a hierarquia visual dos cards de gap e o modal de geração de vaga com IA (incluindo "Copiar para Área de Transferência").
-  - *Condição de Aceite:* Fluxo de geração de vaga mais profissional e prático.
+- [x] **3. Defensividade na Interface (`src/components/AIChat.jsx`)**
+  - *Descrição:* Adicionar verificações de nulidade e mensagens de erro amigáveis para datasets ausentes ou malformados.
+  - *Condição de Aceite:* O componente não quebra se a IA falhar em gerar um dataset específico.
 
-- [x] **4. Build e Validação Final**
-  - *Descrição:* Rodar build e atualizar documentação do projeto.
-  - *Condição de Aceite:* Build sem erros e docs atualizados.
+- [x] **4. Validação e Documentação**
+  - *Descrição:* Atualizar arquivos da pasta `.gemini/` e validar o fluxo.
+  - *Condição de Aceite:* Documentação reflete o estado atual corrigido.
 
 ## Resumo do Fim da Sprint
-- **Build:** Sucesso.
-- **Inovações:** O sistema agora apresenta uma interface de nível profissional, com micro-interações que melhoram a percepção de qualidade do produto.
+- **Bug Fix:** O erro que impedia a renderização de gráficos no dashboard foi resolvido.
+- **Melhoria:** A IA agora tem acesso a mais dados contextuais (data de admissão) para análises temporais.

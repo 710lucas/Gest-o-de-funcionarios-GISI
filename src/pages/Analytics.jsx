@@ -150,7 +150,7 @@ const Analytics = () => {
               <BarChart data={data.occupancyBySkill} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f0f0f0" />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
+                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} interval={0} />
                 <Tooltip 
                   cursor={{ fill: '#f9fafb' }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}

@@ -10,7 +10,7 @@
 - **Cenários Analíticos (Stress Testing):** Geração de dados sintéticos para simular sobrecarga de pessoal, ociosidade e lacunas de competência (skills que ninguém possui).
 - **Configuration (`/configuracoes`):** Toggle between LocalStorage and API, configure API URL, and trigger stress scenarios.
 - **CSV Import/Export:** Support for data portability.
-- **AI Chat:** Interactive chat component for AI-assisted queries.
+- **AI Assistant (Dashboard):** Chat interativo que analisa dados reais para gerar insights e visualizações automáticas (Gráficos Recharts). Recuperado e robustecido para garantir consistência estrutural e suporte a análises temporais (data de admissão).
 
 ## Pending / Future
 - Real-time notifications for overallocated employees.

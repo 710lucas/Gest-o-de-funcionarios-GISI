@@ -64,15 +64,26 @@ const AIChat = ({ isMobile }) => {
     if (!result || !result.datasets || !chartConfig) return null;
 
     const { type, xAxis, dataKey, title, datasetName, prefix = '', suffix = '' } = chartConfig;
-    const data = result.datasets[datasetName] || [];
+    
+    // Garantir que temos um nome de dataset e que ele existe nos resultados
+    if (!datasetName || !result.datasets[datasetName]) {
+      return (
+        <div style={{ padding: '1rem', textAlign: 'center', backgroundColor: '#fef2f2', borderRadius: '8px', margin: '1rem 0' }}>
+          <p style={{ margin: 0, color: '#991b1b', fontSize: '0.875rem' }}>
+            <strong>Erro no Gráfico:</strong> Dataset "{datasetName || 'N/A'}" não encontrado ou não definido pela IA.
+          </p>
+        </div>
+      );
+    }
 
-    if (data.length === 0) return <p style={{ textAlign: 'center', color: '#6b7280' }}>Sem dados para este gráfico.</p>;
+    const data = result.datasets[datasetName];
 
+    // Se for card, pode ser um objeto ou o primeiro item de um array
     if (type === 'card') {
       const value = Array.isArray(data) ? (data[0]?.[dataKey] ?? 0) : (data[dataKey] ?? 0);
       const formattedValue = typeof value === 'number' 
         ? value.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) 
-        : value;
+        : (value ?? 'N/A');
 
       return (
         <div style={{ 
@@ -97,6 +108,11 @@ const AIChat = ({ isMobile }) => {
       );
     }
 
+    // Para outros tipos, precisamos de um array
+    if (!Array.isArray(data) || data.length === 0) {
+      return <p style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>Sem dados suficientes para gerar o gráfico "{title}".</p>;
+    }
+
     return (
       <div style={{ marginTop: '1rem', height: isMobile ? '300px' : '400px', width: '100%', marginBottom: '2rem' }}>
         <h4 style={{ color: '#374151', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>{title}</h4>
@@ -104,30 +120,30 @@ const AIChat = ({ isMobile }) => {
           {type === 'bar' && (
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-              <XAxis dataKey={xAxis} tick={{fontSize: 12}} />
+              <XAxis dataKey={xAxis || 'name'} tick={{fontSize: 12}} />
               <YAxis tick={{fontSize: 12}} />
               <Tooltip />
               <Legend />
-              <Bar dataKey={dataKey} fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey={dataKey || 'value'} fill="#8b5cf6" radius={[4, 4, 0, 0]} />
             </BarChart>
           )}
           {type === 'line' && (
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-              <XAxis dataKey={xAxis} tick={{fontSize: 12}} />
+              <XAxis dataKey={xAxis || 'name'} tick={{fontSize: 12}} />
               <YAxis tick={{fontSize: 12}} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey={dataKey} stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey={dataKey || 'value'} stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
             </LineChart>
           )}
           {type === 'area' && (
             <AreaChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-              <XAxis dataKey={xAxis} tick={{fontSize: 12}} />
+              <XAxis dataKey={xAxis || 'name'} tick={{fontSize: 12}} />
               <YAxis tick={{fontSize: 12}} />
               <Tooltip />
-              <Area type="monotone" dataKey={dataKey} stroke="#8b5cf6" fill="#8b5cf640" strokeWidth={2} />
+              <Area type="monotone" dataKey={dataKey || 'value'} stroke="#8b5cf6" fill="#8b5cf640" strokeWidth={2} />
             </AreaChart>
           )}
           {type === 'pie' && (
@@ -140,7 +156,7 @@ const AIChat = ({ isMobile }) => {
                 label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                 outerRadius={isMobile ? 70 : 100}
                 fill="#8884d8"
-                dataKey={dataKey}
+                dataKey={dataKey || 'value'}
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

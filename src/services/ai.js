@@ -14,7 +14,7 @@ export const aiService = {
     ]);
 
     const dataSchema = {
-      funcionarios: ['id', 'nome', 'cargo', 'departamento', 'salario', 'competencias', 'carga_horaria_max'],
+      funcionarios: ['id', 'nome', 'cargo', 'departamento', 'salario', 'competencias', 'carga_horaria_max', 'data_admissao'],
       projetos: ['id', 'nome', 'descricao', 'status', 'requisitos'],
       alocacoes: ['funcionarioId', 'projetoId', 'competencia', 'esforco']
     };
@@ -26,9 +26,15 @@ export const aiService = {
       Sua tarefa é responder a perguntas do usuário gerando um plano de execução em JSON.
       O plano deve conter:
       1. "entities": lista de entidades afetadas (ex: ['funcionarios', 'projetos']).
-      2. "queryScript": um script JavaScript (função anônima) que recebe um objeto 'context' contendo { funcionarios, projetos, alocacoes } e retorna um objeto contendo os datasets necessários para os gráficos. 
-         Exemplo: { data1: [...], data2: [...] }
+      2. "queryScript": um bloco de código JavaScript que será executado em uma função que tem acesso direto às variáveis { funcionarios, projetos, alocacoes }. 
+         IMPORTANTE: O script deve retornar um objeto com os datasets, ex: "return { data1: [...], data2: [...] };". Evite envolver em outra função como "(context) => { ... }".
       3. "charts": lista de configurações de gráficos para Recharts.
+         Cada objeto em 'charts' DEVE ter: 
+         - "type": 'bar', 'line', 'pie', 'area' ou 'card'
+         - "title": título do gráfico
+         - "datasetName": a chave correspondente no objeto retornado pelo queryScript
+         - "xAxis": (se não for pie/card) o campo para o eixo X
+         - "dataKey": o campo para os valores (eixo Y)
       4. "explanation": breve explicação do que será feito.
 
       Regras de Negócio:
@@ -52,11 +58,33 @@ export const aiService = {
 
     const aiResult = JSON.parse(response);
     
-    // Executar o script gerado
+    // Executar o script gerado com tratamento robusto
     let datasets = {};
     try {
-      const executeQuery = new Function('context', aiResult.queryScript);
-      datasets = executeQuery({ funcionarios: allData, projetos: projects, alocacoes: allocations });
+      const scriptBody = aiResult.queryScript.trim();
+      const contextObj = { funcionarios: allData, projetos: projects, alocacoes: allocations };
+      
+      // Caso a IA tenha enviado uma arrow function ou definição de função
+      if (scriptBody.startsWith('(') || scriptBody.startsWith('context') || scriptBody.startsWith('function')) {
+        try {
+          const fn = new Function(`return ${scriptBody}`)();
+          datasets = fn(contextObj);
+        } catch (innerError) {
+          const finalScript = scriptBody.includes('return') ? scriptBody : `return ${scriptBody}`;
+          // Desestruturamos aqui para que a IA possa usar 'funcionarios', 'projetos', etc diretamente
+          const executeQuery = new Function('{ funcionarios, projetos, alocacoes }', finalScript);
+          datasets = executeQuery(contextObj);
+        }
+      } else {
+        const finalScript = scriptBody.includes('return') ? scriptBody : `return ${scriptBody}`;
+        const executeQuery = new Function('{ funcionarios, projetos, alocacoes }', finalScript);
+        datasets = executeQuery(contextObj);
+      }
+
+      // Garantir que datasets seja um objeto
+      if (!datasets || typeof datasets !== 'object') {
+        datasets = {};
+      }
     } catch (e) {
       console.error('Erro ao executar queryScript da IA:', e);
       throw new Error('A IA gerou um script de consulta inválido.');
