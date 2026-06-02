@@ -322,7 +322,7 @@ const Projetos = () => {
                                             gap: '0.5rem'
                                           }}>
                                             {isOverloaded && <AlertTriangle size={14} color="#ef4444" />}
-                                            {func?.nome} ({aloc.esforco}h / Total: {esforcoTotalFunc}h)
+                                            {func?.nome} ({esforcoTotalFunc}h alocadas)
                                             <button onClick={() => handleAlocar(aloc.funcionarioId, projeto.id, aloc.competencia, 0)} className="remove-skill">&times;</button>
                                           </span>
                                         </div>
@@ -351,7 +351,7 @@ const Projetos = () => {
                                                       handleAlocar(s.id, projeto.id, req.competencia, req.esforço_por_pessoa);
                                                     }}
                                                   >
-                                                    {s.nome} (+{s.esforcoAtual}h)
+                                                    {s.nome} ({s.esforcoAtual}h totais)
                                                   </button>
                                                 ))
                                               }
@@ -379,7 +379,7 @@ const Projetos = () => {
                                             onClick={() => handleAlocar(s.id, projeto.id, req.competencia, req.esforço_por_pessoa)}
                                             title={`Capacidade: ${s.esforcoAtual}/${s.carga_horaria_max}h`}
                                           >
-                                            + {s.nome} ({s.esforcoAtual}h)
+                                            + {s.nome} ({s.esforcoAtual}h totais)
                                           </button>
                                         ))
                                       ) : (
