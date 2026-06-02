@@ -1,75 +1,89 @@
-# Sistema de Gestão de Funcionários (Simples)
+# 🚀 GISI - Sistema de Gestão de Talentos e Recursos Inteligente
 
-Este é um sistema CRUD simples desenvolvido em React para gestão de funcionários, utilizando um arquivo CSV local como "banco de dados".
+O **GISI** (Gestão Integrada de Sistemas de Informação) é um ERP moderno para gestão de capital humano e planejamento de recursos (ERM). Desenvolvido com React + Vite, o sistema evoluiu de um simples CRUD para uma plataforma de inteligência de dados robusta, integrando Inteligência Artificial para análise preditiva, alocação estratégica e automação de relatórios.
 
-## Estrutura do Projeto
+![Dashboard Preview](https://img.shields.io/badge/UI-Premium_Executive-0f172a?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Estável_/_Completo-10b981?style=for-the-badge)
 
-O projeto segue uma estrutura organizada e modular:
+---
 
-- `src/services`: Contém a lógica de interação com o CSV e persistência local.
-- `src/components`: Componentes reutilizáveis (Navbar, Modal).
-- `src/pages`: As telas principais (Dashboard, Cadastro, Listagem).
-- `src/index.css`: Estilos globais e componentes visuais.
-- `public/banco.csv`: Arquivo CSV base usado para inicializar o sistema.
+## 🌟 Pilares do Sistema
 
-## Funcionalidades
+### 📊 1. Inteligência de Analytics
+Transformamos dados brutos em decisões estratégicas. O painel de Analytics monitora a saúde operacional da empresa em tempo real:
+*   **Ocupação por Competência:** Gráficos interativos com identificação de zonas críticas (>80% de uso) e ociosas (<30%).
+*   **Recomendações de Gestão:** A IA analisa a carga horária e sugere automaticamente contratações ou realocações.
+*   **Saúde da Equipe:** Monitoramento de stress e sobrecarga de profissionais com visualização de barras de calor.
 
-1.  **Dashboard**: Visão geral com estatísticas (Total de funcionários, departamentos, folha salarial).
-2.  **Cadastro**: Formulário para adicionar novos funcionários.
-3.  **Gestão (Listagem)**: Tabela de funcionários com opções de visualização, edição e exclusão via Modal.
-4.  **Exportar CSV**: Botão no Dashboard para baixar o banco de dados atualizado.
+### 🤖 2. Assistente de Dados IA
+Um copiloto integrado que entende o seu banco de dados:
+*   **Consultas Dinâmicas:** Pergunte qualquer coisa (ex: "Qual departamento é mais caro?") e receba gráficos e interpretações textuais automáticas.
+*   **Geração de Relatórios:** Criação de relatórios executivos mensais em PDF com análise de tendências, diversidade de cargos e custos.
+*   **Draft de Vagas:** Identifica Gaps de Skill nos projetos e gera descrições de vagas completas prontas para publicação.
 
-## Como Rodar
+### 🏗️ 3. Gestão de Projetos e Alocação
+Planejamento de recursos de ponta a ponta:
+*   **Requisitos Dinâmicos:** Definição de skills necessárias e esforço semanal por projeto.
+*   **Smart Swapping:** Sugestão inteligente de substitutos para profissionais sobrecarregados.
+*   **Timeline e Gaps:** Visualização clara de onde faltam profissionais para atingir os objetivos do projeto.
 
-1.  No terminal, na pasta do projeto:
+---
+
+## 🛠️ Tecnologias
+
+*   **Frontend:** React 18, Vite, Recharts (Visualização de Dados).
+*   **UI/UX:** Design System customizado (Modern Dark/Light), Lucide Icons, Framer Motion (Transições).
+*   **IA:** Integração nativa com Google Gemini, OpenAI e Custom Proxies.
+*   **Exportação:** jspdf + html2canvas para relatórios profissionais.
+*   **Persistência:** Suporte dual para LocalStorage (Auto-migração) e API REST Spring Boot.
+
+---
+
+## 🚀 Como Iniciar
+
+1.  **Clonar e Instalar:**
     ```bash
+    git clone https://github.com/710lucas/Gest-o-de-funcionarios-GISI.git
+    cd gestao-funcionarios
     npm install
+    ```
+
+2.  **Executar:**
+    ```bash
     npm run dev
     ```
 
-2.  Acesse a aplicação no navegador (geralmente em `http://localhost:5173`).
+3.  **Configurar IA (Opcional, mas recomendado):**
+    *   Vá em **Configurações** no menu lateral.
+    *   Insira sua **Google Gemini Key** ou **OpenAI Key**.
+    *   O sistema passará a gerar insights automáticos no Dashboard e Relatórios.
 
-## Integração com API
+---
 
-O sistema suporta dois modos de operação:
-- **LocalStorage** (padrão): Dados armazenados localmente no navegador
-- **API Externa**: Conecta com uma API REST Spring Boot
+## 📂 Estrutura do Projeto
 
-### Configurando a API
+*   `src/pages`: Telas principais (Dashboard, Projetos, Analytics, SkillGaps, Relatórios).
+*   `src/components`: Componentes premium (AIChat, Modais, Navbars customizadas).
+*   `src/services`: Motores de inteligência (`ai.js`) e integração de dados (`api.js`).
+*   `.gemini/`: Documentação de arquitetura, histórico de sprints e decisões técnicas (ADR).
 
-1. Acesse a aba **Configurações** no menu
-2. Digite a URL da sua API (ex: `http://localhost:8080/funcionarios`)
-3. Clique em **"Salvar URL"**
-4. Clique em **"Usar API Externa"** para ativar
+---
 
-### Populando a API com Dados de Teste
+## ⚙️ Modos de Operação
 
-Dois scripts estão disponíveis para popular sua API com 300 funcionários:
+### Modo Local (Padrão)
+Os dados são armazenados no `localStorage`. Ao iniciar pela primeira vez, o sistema gera automaticamente **80 profissionais** e **15 projetos** para demonstração de analytics. Você pode resetar este estado a qualquer momento nas configurações.
 
-**Opção 1: Node.js** (recomendado)
-```bash
-node populate-api.js http://localhost:8080/funcionarios
-```
+### Modo API Externa
+Conecta o sistema a um backend Java Spring Boot. 
+*   Consulte [API_CONFIG.md](API_CONFIG.md) para especificações de endpoints e DTOs.
+*   Scripts para população em massa da API estão disponíveis na raiz (`populate-api.js`).
 
-**Opção 2: Bash/Curl**
-```bash
-chmod +x populate-api.sh
-./populate-api.sh http://localhost:8080/funcionarios
-```
+---
 
-Ambos os scripts:
-- Criam 300 funcionários com dados aleatórios
-- Enviam em lotes de 10 para não sobrecarregar a API
-- Mostram progresso em tempo real
-- Geram salários compatíveis com os cargos
+## 📈 Cenários de Stress
+Nas configurações, você pode ativar o **"Modo Stress"**. O sistema gerará um cenário onde 30% da equipe está sobrecarregada e existem múltiplos projetos com Gaps de Skill, permitindo testar as ferramentas de realocação e geração de vagas da IA.
 
-Para mais detalhes sobre a API, consulte o arquivo [API_CONFIG.md](API_CONFIG.md).
+---
 
-## Importante: Persistência de Dados
-
-Como esta é uma aplicação puramente Frontend, **não é possível salvar alterações diretamente no arquivo `banco.csv` original no disco**.
-
-**Solução:**
-- O sistema lê o arquivo `banco.csv` na primeira execução.
-- As alterações são salvas no armazenamento local do navegador (`localStorage`).
-- Para salvar definitivo, use o botão **"Baixar CSV do Banco de Dados"** no Dashboard.
+**Desenvolvido com foco em escalabilidade e tomada de decisão orientada a dados.** 🚀
