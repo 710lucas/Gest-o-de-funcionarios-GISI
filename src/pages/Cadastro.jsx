@@ -7,7 +7,6 @@ const Cadastro = () => {
     const navigate = useNavigate();
     const [isMobile, setIsMobile] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [newSkill, setNewSkill] = useState('');
     const [formData, setFormData] = useState({
         nome: '',
         cargo: '',
@@ -34,24 +33,6 @@ const Cadastro = () => {
         setFormData(prev => ({
             ...prev,
             [name]: value
-        }));
-    };
-
-    const handleAddSkill = (e) => {
-        if (e) e.preventDefault();
-        if (newSkill && !formData.competencias.includes(newSkill)) {
-            setFormData(prev => ({
-                ...prev,
-                competencias: [...prev.competencias, newSkill]
-            }));
-            setNewSkill('');
-        }
-    };
-
-    const handleRemoveSkill = (skill) => {
-        setFormData(prev => ({
-            ...prev,
-            competencias: prev.competencias.filter(s => s !== skill)
         }));
     };
 
@@ -153,49 +134,6 @@ const Cadastro = () => {
                             onChange={handleChange}
                             required
                         />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Competências / Skills</label>
-                        <div className="skills-container" style={{ marginBottom: '0.75rem' }}>
-                            {formData.competencias.map(skill => (
-                                <span key={skill} className="skill-tag">
-                                    {skill}
-                                    <button 
-                                        type="button" 
-                                        className="remove-skill" 
-                                        onClick={() => handleRemoveSkill(skill)}
-                                    >
-                                        &times;
-                                    </button>
-                                </span>
-                            ))}
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <input 
-                                list="competencias-sugeridas"
-                                className="form-input" 
-                                value={newSkill} 
-                                onChange={(e) => setNewSkill(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleAddSkill(e)}
-                                placeholder="Digitar ou selecionar skill..."
-                                style={{ flex: 1 }}
-                            />
-                            <datalist id="competencias-sugeridas">
-                                {api.getCompetenciasPadrao()
-                                    .filter(c => !formData.competencias.includes(c))
-                                    .map(c => <option key={c} value={c} />)
-                                }
-                            </datalist>
-                            <button 
-                                type="button" 
-                                className="btn btn-secondary" 
-                                onClick={handleAddSkill}
-                                style={{ whiteSpace: 'nowrap' }}
-                            >
-                                Adicionar
-                            </button>
-                        </div>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>

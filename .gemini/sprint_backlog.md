@@ -7,7 +7,7 @@ Lista de tarefas pendentes e previsão de alocação futura.
 - [ ] Implementação de botões de limpar busca e micro-interações.
 - [ ] Melhoria de acessibilidade (ARIA labels).
 
-## Previsão: Sprint 11
+## Previsão: Sprint 10
 - [ ] Implementar autenticação básica de usuários.
 - [ ] Exportação do plano de capacidade completo em PDF.
 - [ ] Timeline de Projetos (Gantt simplificado).
