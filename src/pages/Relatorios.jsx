@@ -120,7 +120,7 @@ const Relatorios = () => {
           {type === 'bar' && (
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey={xAxis} tick={{fontSize: 11, fill: '#64748b'}} />
+              <XAxis dataKey={xAxis} tick={{fontSize: 10, fill: '#64748b'}} interval={0} />
               <YAxis tick={{fontSize: 11, fill: '#64748b'}} />
               <Tooltip />
               <Bar dataKey={dataKey} fill="#1e293b" radius={[4, 4, 0, 0]} isAnimationActive={false} />

@@ -244,12 +244,19 @@ export const aiService = {
       alocacoes: ['funcionarioId', 'projetoId', 'competencia', 'esforco']
     };
 
-    const finalPrompt = userPrompt && userPrompt.trim() !== '' ? userPrompt : "Gere um relatório mensal padrão cobrindo panorama de pessoas, diversidade de cargos, análise salarial e ocupação de projetos.";
+    const finalPrompt = userPrompt && userPrompt.trim() !== '' ? userPrompt : "Gere um relatório mensal padrão cobrindo panorama de pessoas (total, alocados e sem alocação), diversidade de cargos, análise salarial e ocupação de projetos.";
 
     const systemPrompt = `
       Você é um Desenvolvedor Sênior e Analista de Dados. Gere o plano de um RELATÓRIO EXECUTIVO FORMAL.
       Banco de dados (Objeto 'context'): ${JSON.stringify(dataSchema)}.
       Objetivo: "${finalPrompt}"
+
+      RECOMENDAÇÃO DE ESTRUTURA:
+      Para um relatório completo, sugere-se iniciar com uma seção de "Panorama Geral de Pessoal" (type: 'cards') contendo métricas como:
+      - Total de Funcionários (dataKey: 'total')
+      - Funcionários Alocados em Projetos (dataKey: 'alocados')
+      - Funcionários Sem Alocação (dataKey: 'sem_alocacao')
+      Use o datasetName 'panorama' se seguir esta sugestão.
 
       RETORNE APENAS UM JSON NO FORMATO:
       {
@@ -276,10 +283,11 @@ export const aiService = {
       }
 
       REGRAS CRÍTICAS DE ENGENHARIA:
-      1. SINTAXE JS: O 'queryScript' deve ser executável. NUNCA use espaços em nomes de variáveis (ex: use 'cargosUnicos' em vez de 'cargos Unicos').
-      2. FOCO EM GRÁFICOS: Para relatórios detalhados, priorize seções do tipo 'chart' para visualização de tendências e distribuições.
-      3. RETORNO DO SCRIPT: O script deve terminar com 'return { chave1: dado1, chave2: dado2 };'.
-      4. MAPEAMENTO: Garanta que 'datasetName' em cada seção corresponda exatamente a uma chave no objeto retornado pelo script.
+      1. SINTAXE JS: O 'queryScript' deve ser executável. NUNCA use espaços em nomes de variáveis.
+      2. RETORNO DO SCRIPT: O script deve terminar com 'return { chave1: dado1, chave2: dado2 };'.
+      3. MAPEAMENTO: Garanta que 'datasetName' em cada seção/métrica corresponda exatamente a uma chave no objeto retornado pelo script.
+      4. FLEXIBILIDADE: Você pode criar quantas seções desejar para cumprir o objetivo, alternando entre gráficos e cards.
+      5. GRÁFICOS: Para gráficos de barra, o intervalo entre os rótulos deve ser sempre 0 para garantir que todos os itens apareçam.
     `;
 
     const reportPlanRaw = await this.callAI(config, systemPrompt, "");
