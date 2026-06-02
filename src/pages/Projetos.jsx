@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Briefcase, Plus, Users, AlertTriangle, CheckCircle, Search, Trash2, Edit3, ClipboardList, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 
 const Projetos = () => {
+  const navigate = useNavigate();
   const [projetos, setProjetos] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
   const [alocacoes, setAlocacoes] = useState([]);
@@ -133,8 +135,8 @@ const Projetos = () => {
       .sort((a, b) => a.esforcoAtual - b.esforcoAtual);
   };
 
-  const StatCard = ({ title, value, icon: IconComponent, color }) => (
-    <div className="stat-card" style={{ 
+  const StatCard = ({ title, value, icon: IconComponent, color, onClick }) => (
+    <div className="stat-card" onClick={onClick} style={{ 
       padding: isMobile ? '1rem' : '1.5rem', 
       borderRadius: '8px', 
       boxShadow: '0 4px 6px rgba(0,0,0,0.05)', 
@@ -142,7 +144,9 @@ const Projetos = () => {
       display: 'flex', 
       alignItems: 'center', 
       gap: '1rem', 
-      flexGrow: '1' 
+      flexGrow: '1',
+      cursor: onClick ? 'pointer' : 'default',
+      transition: onClick ? 'transform 0.2s' : 'none'
     }}>
       <div style={{ backgroundColor: `${color}20`, padding: isMobile ? '0.75rem' : '1rem', borderRadius: '50%', display: 'flex' }}>
         <IconComponent size={isMobile ? 24 : 32} color={color} />
@@ -174,6 +178,7 @@ const Projetos = () => {
         <StatCard 
           title="Gaps de Skill" 
           value={projetos.reduce((total, p) => {
+            if (p.status === 'Concluído') return total;
             const projAloc = getAlocacoesProjeto(p.id);
             return total + p.requisitos.reduce((gap, req) => {
               const alocadosReq = projAloc.filter(a => a.competencia === req.competencia).length;
@@ -182,6 +187,7 @@ const Projetos = () => {
           }, 0)} 
           icon={AlertTriangle} 
           color="#ef4444" 
+          onClick={() => navigate('/skill-gaps')}
         />
       </div>
 
@@ -236,40 +242,65 @@ const Projetos = () => {
             const isCollapsed = collapsedProjects[projeto.id];
 
             return (
-              <div key={projeto.id} className="card" style={{ marginBottom: '1.5rem', padding: '0', overflow: 'hidden', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                {/* Header sempre visível */}
+              <div 
+                key={projeto.id} 
+                className="project-card"
+                style={{ 
+                  backgroundColor: '#fff', 
+                  borderRadius: '12px', 
+                  marginBottom: '1.5rem', 
+                  boxShadow: isCollapsed ? '0 1px 3px rgba(0,0,0,0.1)' : '0 10px 25px -5px rgba(0,0,0,0.05)',
+                  border: isCollapsed ? '1px solid #e5e7eb' : '1px solid var(--primary-color)',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
                 <div 
-                  onClick={() => toggleCollapse(projeto.id)}
+                  className="project-header"
+                  onClick={() => toggleCollapse(projeto.id)} 
                   style={{ 
                     padding: isMobile ? '1.25rem' : '1.5rem', 
                     cursor: 'pointer',
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center',
-                    backgroundColor: isCollapsed ? '#fff' : '#fcfcfc',
-                    borderBottom: isCollapsed ? 'none' : '1px solid #f3f4f6'
+                    backgroundColor: isCollapsed ? '#fff' : '#f8faff',
+                    borderBottom: isCollapsed ? 'none' : '1px solid #eef2ff'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                    {isCollapsed ? <ChevronDown size={20} color="#6b7280" /> : <ChevronUp size={20} color="#6b7280" />}
+                    <div style={{ 
+                      backgroundColor: isCollapsed ? '#f3f4f6' : 'var(--primary-color)', 
+                      padding: '0.5rem', 
+                      borderRadius: '8px',
+                      color: isCollapsed ? '#6b7280' : 'white',
+                      display: 'flex',
+                      transition: 'all 0.2s'
+                    }}>
+                      {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                    </div>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <h2 style={{ margin: 0, fontSize: isMobile ? '1.1rem' : '1.25rem' }}>{projeto.nome}</h2>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <h2 style={{ margin: 0, fontSize: isMobile ? '1.1rem' : '1.25rem', fontWeight: '700', color: '#111827' }}>{projeto.nome}</h2>
                         <span className={`status-badge status-${projeto.status.toLowerCase().replace(' ', '-')}`}>
                           {projeto.status}
                         </span>
                       </div>
-                      {isCollapsed && <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.25rem' }}>{projeto.descricao.substring(0, 60)}...</p>}
+                      {isCollapsed && projeto.descricao && (
+                        <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                          {projeto.descricao.length > 70 ? `${projeto.descricao.substring(0, 70)}...` : projeto.descricao}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
-                    <button className="btn btn-secondary" style={{ padding: '0.5rem' }} onClick={() => {
+                    <button className="btn btn-secondary" style={{ padding: '0.5rem', borderRadius: '8px' }} onClick={() => {
                       setEditingProjeto(projeto);
                       setProjetoForm(projeto);
                       setShowModal(true);
                     }}><Edit3 size={16} /></button>
-                    <button className="btn btn-danger" style={{ padding: '0.5rem' }} onClick={async () => {
+                    <button className="btn btn-danger" style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#b91c1c', border: 'none' }} onClick={async () => {
                       if(confirm('Deseja excluir este projeto?')) {
                         await api.deleteProjeto(projeto.id);
                         fetchData();
@@ -280,64 +311,97 @@ const Projetos = () => {
 
                 {/* Conteúdo Expansível */}
                 {!isCollapsed && (
-                  <div style={{ padding: isMobile ? '1.25rem' : '1.5rem' }}>
-                    <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{projeto.descricao}</p>
+                  <div style={{ padding: isMobile ? '1.5rem' : '2rem', animation: 'slideDown 0.3s ease-out' }}>
+                    <p style={{ color: '#4b5563', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: '1.6', borderLeft: '4px solid #e5e7eb', paddingLeft: '1rem' }}>
+                      {projeto.descricao || 'Nenhuma descrição fornecida.'}
+                    </p>
 
-                    <div className="form-grid" style={{ gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: '2rem' }}>
+                    <div className="form-grid" style={{ gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: '2.5rem' }}>
                       <div style={{ minWidth: 0 }}>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Users size={18} /> Requisitos e Alocação
+                        <h3 style={{ fontSize: '1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          <Users size={18} color="var(--primary-color)" /> Requisitos e Alocação
                         </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                           {requisitos.map((req, idx) => {
                             const alocadosParaEsteReq = projAloc.filter(a => a.competencia === req.competencia);
                             const falta = req.quantidade - alocadosParaEsteReq.length;
                             const sugeridos = getSugeridos(req.competencia, projeto.id);
 
                             return (
-                              <div key={idx} style={{ padding: '1rem', border: '1px solid #f3f4f6', borderRadius: '8px', backgroundColor: '#f9fafb' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                  <span style={{ fontWeight: '600', color: '#374151' }}>{req.competencia} <span style={{ fontWeight: 'normal', color: '#6b7280' }}>({req.quantidade} vagas)</span></span>
-                                  <span className={falta <= 0 ? 'match-success' : 'match-danger'} style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                              <div key={idx} style={{ padding: '1.25rem', border: '1px solid #f3f4f6', borderRadius: '12px', backgroundColor: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontWeight: '700', color: '#111827', fontSize: '0.95rem' }}>{req.competencia}</span>
+                                    <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Necessário: {req.quantidade} profissional(is)</span>
+                                  </div>
+                                  <span className={falta <= 0 ? 'match-success' : 'match-danger'} style={{ fontSize: '0.7rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', borderRadius: '9999px', backgroundColor: falta <= 0 ? '#f0fdf4' : '#fef2f2' }}>
                                     {falta <= 0 ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
-                                    {falta <= 0 ? 'COBERTO' : `${falta} PENDENTE`}
+                                    {falta <= 0 ? 'COMPLETO' : `${falta} PENDENTE`}
                                   </span>
                                 </div>
 
-                                <div className="skills-container" style={{ gap: '0.75rem' }}>
+                                <div className="skills-container" style={{ gap: '0.75rem', marginBottom: alocadosParaEsteReq.length > 0 ? '1rem' : '0' }}>
                                   {alocadosParaEsteReq.map(aloc => {
                                     const func = funcionarios.find(f => f.id == aloc.funcionarioId);
                                     const esforcoTotalFunc = getEsforcoAtual(aloc.funcionarioId);
                                     const isOverloaded = esforcoTotalFunc > (func?.carga_horaria_max || 40);
 
                                     return (
-                                      <div key={aloc.funcionarioId} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                          <span className="skill-tag" style={{ 
-                                            background: isOverloaded ? '#fee2e2' : '#dcfce7', 
-                                            color: isOverloaded ? '#991b1b' : '#166534', 
-                                            border: `1px solid ${isOverloaded ? '#fecaca' : '#bbf7d0'}`,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem'
-                                          }}>
-                                            {isOverloaded && <AlertTriangle size={14} color="#ef4444" />}
-                                            {func?.nome} ({esforcoTotalFunc}h alocadas)
-                                            <button onClick={() => handleAlocar(aloc.funcionarioId, projeto.id, aloc.competencia, 0)} className="remove-skill">&times;</button>
-                                          </span>
+                                      <div key={aloc.funcionarioId} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+                                        <div style={{ 
+                                          display: 'flex', 
+                                          alignItems: 'center', 
+                                          justifyContent: 'space-between',
+                                          padding: '0.6rem 0.8rem',
+                                          borderRadius: '8px',
+                                          backgroundColor: isOverloaded ? '#fff1f2' : '#f8faff',
+                                          border: `1px solid ${isOverloaded ? '#fecaca' : '#e0e7ff'}`
+                                        }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                            <div style={{ 
+                                              width: '32px', 
+                                              height: '32px', 
+                                              borderRadius: '50%', 
+                                              backgroundColor: isOverloaded ? '#ef4444' : 'var(--primary-color)',
+                                              color: 'white',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              fontSize: '0.75rem',
+                                              fontWeight: 'bold'
+                                            }}>
+                                              {func?.nome.charAt(0)}
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#1f2937' }}>{func?.nome}</span>
+                                              <span style={{ fontSize: '0.7rem', color: isOverloaded ? '#b91c1c' : '#6b7280' }}>
+                                                {esforcoTotalFunc}h alocadas no total
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <button 
+                                            onClick={() => handleAlocar(aloc.funcionarioId, projeto.id, aloc.competencia, 0)} 
+                                            style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: '0.25rem' }}
+                                            title="Remover do projeto"
+                                          >
+                                            &times;
+                                          </button>
                                         </div>
                                         
                                         {isOverloaded && (
                                           <div style={{ 
-                                            fontSize: '0.7rem', 
+                                            fontSize: '0.75rem', 
                                             color: '#991b1b', 
-                                            background: '#fff1f2', 
-                                            padding: '0.5rem', 
-                                            borderRadius: '6px', 
-                                            border: '1px dashed #fda4af'
+                                            background: '#fff', 
+                                            padding: '0.75rem', 
+                                            borderRadius: '8px', 
+                                            border: '1px solid #fecaca',
+                                            boxShadow: '0 2px 4px rgba(239, 68, 68, 0.05)'
                                           }}>
-                                            <strong>⚠️ Sobrecarga detectada!</strong> Trocar por:
-                                            <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: '700' }}>
+                                              <AlertTriangle size={14} /> SOBRECARGA! Sugestões de troca:
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                               {sugeridos
                                                 .filter(s => !s.jaAlocado && (s.esforcoAtual + req.esforço_por_pessoa) <= (s.carga_horaria_max || 40))
                                                 .slice(0, 3)
@@ -345,18 +409,18 @@ const Projetos = () => {
                                                   <button 
                                                     key={s.id}
                                                     className="btn btn-secondary"
-                                                    style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem', whiteSpace: 'nowrap' }}
+                                                    style={{ fontSize: '0.7rem', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap', borderStyle: 'dashed' }}
                                                     onClick={() => {
                                                       handleAlocar(aloc.funcionarioId, projeto.id, aloc.competencia, 0);
                                                       handleAlocar(s.id, projeto.id, req.competencia, req.esforço_por_pessoa);
                                                     }}
                                                   >
-                                                    {s.nome} ({s.esforcoAtual}h totais)
+                                                    + {s.nome} ({s.esforcoAtual}h)
                                                   </button>
                                                 ))
                                               }
                                               {sugeridos.filter(s => !s.jaAlocado && (s.esforcoAtual + req.esforço_por_pessoa) <= (s.carga_horaria_max || 40)).length === 0 && (
-                                                <span style={{ fontStyle: 'italic', opacity: 0.7 }}>Sem substitutos disponíveis</span>
+                                                <span style={{ fontStyle: 'italic', opacity: 0.7, fontSize: '0.7rem' }}>Sem substitutos disponíveis</span>
                                               )}
                                             </div>
                                           </div>
@@ -367,24 +431,42 @@ const Projetos = () => {
                                 </div>
 
                                 {falta > 0 && (
-                                  <div style={{ marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '0.75rem' }}>
-                                    <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 'bold', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Sugestões de Matching:</div>
-                                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                                  <div style={{ marginTop: '0.5rem', borderTop: '1px solid #f3f4f6', paddingTop: '1rem' }}>
+                                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '800', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.025em' }}>Funcionários Disponíveis:</div>
+                                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                       {sugeridos.filter(s => !s.jaAlocado).length > 0 ? (
                                         sugeridos.filter(s => !s.jaAlocado).map(s => (
                                           <button 
                                             key={s.id} 
                                             className="btn btn-secondary" 
-                                            style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem', whiteSpace: 'nowrap' }}
+                                            style={{ 
+                                              fontSize: '0.75rem', 
+                                              padding: '0.4rem 0.75rem', 
+                                              whiteSpace: 'nowrap', 
+                                              backgroundColor: '#fff',
+                                              borderColor: 'var(--primary-color)',
+                                              color: 'var(--primary-color)'
+                                            }}
                                             onClick={() => handleAlocar(s.id, projeto.id, req.competencia, req.esforço_por_pessoa)}
                                             title={`Capacidade: ${s.esforcoAtual}/${s.carga_horaria_max}h`}
                                           >
-                                            + {s.nome} ({s.esforcoAtual}h totais)
+                                            + {s.nome} ({s.esforcoAtual}h)
                                           </button>
                                         ))
                                       ) : (
-                                        <div className="gap-indicator" style={{ margin: 0, padding: '0.5rem', fontSize: '0.75rem', width: '100%' }}>
-                                          ⚠️ Sem recursos disponíveis. Recomenda-se contratação.
+                                        <div style={{ 
+                                          padding: '0.75rem', 
+                                          backgroundColor: '#fff7ed', 
+                                          borderRadius: '8px', 
+                                          fontSize: '0.75rem', 
+                                          color: '#9a3412',
+                                          width: '100%',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '0.5rem',
+                                          border: '1px solid #ffedd5'
+                                        }}>
+                                          <AlertTriangle size={14} /> Sem recursos disponíveis. Considere contratação.
                                         </div>
                                       )}
                                     </div>
@@ -396,37 +478,37 @@ const Projetos = () => {
                         </div>
                       </div>
 
-                      <div>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <TrendingUp size={18} /> Resumo de Esforço
+                      <div style={{ alignSelf: 'start', position: 'sticky', top: '2rem' }}>
+                        <h3 style={{ fontSize: '1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          <TrendingUp size={18} color="var(--primary-color)" /> Panorama de Esforço
                         </h3>
-                        <div style={{ background: '#f9fafb', padding: '1.25rem', borderRadius: '8px', border: '1px solid #f3f4f6' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                            <span style={{ color: '#6b7280' }}>Total Estimado:</span>
-                            <span style={{ fontWeight: 'bold' }}>{esforcoTotal}h</span>
+                        <div style={{ background: '#f8faff', padding: '1.5rem', borderRadius: '16px', border: '1px solid #eef2ff' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
+                            <span style={{ color: '#64748b', fontWeight: '500' }}>Carga Total Planejada:</span>
+                            <span style={{ fontWeight: '700', color: '#1e293b' }}>{esforcoTotal}h/semana</span>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', fontSize: '0.9rem' }}>
-                            <span style={{ color: '#6b7280' }}>Total Alocado:</span>
-                            <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>{esforcoAlocado}h</span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                            <span style={{ color: '#64748b', fontWeight: '500' }}>Carga Total Alocada:</span>
+                            <span style={{ fontWeight: '800', color: 'var(--primary-color)' }}>{esforcoAlocado}h/semana</span>
                           </div>
 
                           <div style={{ marginBottom: '0.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.25rem' }}>
-                              <span style={{ fontWeight: 'bold' }}>Progresso de Alocação</span>
-                              <span>{Math.round((esforcoAlocado / (esforcoTotal || 1)) * 100)}%</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+                              <span style={{ fontWeight: '700', color: '#475569' }}>Preenchimento de Vagas</span>
+                              <span style={{ fontWeight: '800', color: 'var(--primary-color)' }}>{Math.round((esforcoAlocado / (esforcoTotal || 1)) * 100)}%</span>
                             </div>
-                            <div style={{ height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ height: '10px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
                               <div style={{ 
                                 height: '100%', 
-                                background: esforcoAlocado >= esforcoTotal ? 'var(--success-color)' : 'var(--primary-color)', 
+                                background: esforcoAlocado >= esforcoTotal ? 'var(--success-color)' : 'linear-gradient(90deg, var(--primary-color), #60a5fa)', 
                                 width: `${Math.min(100, (esforcoAlocado / (esforcoTotal || 1)) * 100)}%`,
-                                transition: 'width 0.3s ease'
+                                transition: 'width 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
                               }}></div>
                             </div>
                           </div>
-                          <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '1rem' }}>
-                            * O esforço alocado é baseado na carga horária semanal definida para cada vaga do projeto.
-                          </p>
+                          <div style={{ marginTop: '1.5rem', padding: '0.75rem', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #eef2ff', fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>
+                            O esforço é calculado com base nas horas semanais estimadas para cada requisito de competência do projeto.
+                          </div>
                         </div>
                       </div>
                     </div>

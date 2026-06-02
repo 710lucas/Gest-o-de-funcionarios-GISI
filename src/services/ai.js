@@ -289,5 +289,32 @@ export const aiService = {
       ...reportPlan,
       datasets
     };
+  },
+
+  async generateJobPosting({ skill, projeto, senioridade, salario, beneficios }) {
+    const config = api.getAIConfig();
+    if (!config.apiKey && config.provider !== 'proxy') {
+      throw new Error('API Key não configurada');
+    }
+
+    const prompt = `
+      Atue como um Tech Recruiter sênior. Escreva uma descrição de vaga de emprego atraente e profissional para a seguinte necessidade:
+      
+      - Cargo/Skill: Desenvolvedor(a) ${skill} (${senioridade})
+      - Projeto: ${projeto.nome} (${projeto.descricao || 'Projeto confidencial'})
+      - Salário/Faixa: ${salario || 'A combinar'}
+      - Benefícios/Observações: ${beneficios || 'Benefícios padrão de mercado'}
+      
+      Estruture a vaga com:
+      1. Título chamativo
+      2. Sobre o projeto (breve resumo)
+      3. Responsabilidades (o que a pessoa fará)
+      4. Requisitos (além do ${skill})
+      5. O que oferecemos (Salário e benefícios)
+      
+      Use um tom engajador e moderno. Retorne APENAS o texto da vaga, sem comentários extras.
+    `;
+
+    return await this.callAIForText(config, prompt);
   }
 };
