@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { Users, AlertTriangle, CheckCircle, TrendingUp, Activity, Zap, Clock } from 'lucide-react';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Users, AlertTriangle, CheckCircle, TrendingUp, Activity, Zap, Clock, RefreshCw, ChevronRight } from 'lucide-react';
 
 const Analytics = () => {
   const [loading, setLoading] = useState(true);
@@ -35,21 +35,18 @@ const Analytics = () => {
         api.getAllAlocacoes()
       ]);
 
-      // 1. Processar Ocupação por Skill
       const skillStats = {};
       const allSkills = api.getCompetenciasPadrao();
       allSkills.forEach(s => skillStats[s] = { total: 0, allocated: 0 });
 
-      // Horas totais disponíveis por skill
       funcs.forEach(f => {
         (f.competencias || []).forEach(s => {
           if (skillStats[s]) {
-            skillStats[s].total += f.carga_horaria_max / (f.competencias.length || 1);
+            skillStats[s].total += (f.carga_horaria_max || 40) / (f.competencias.length || 1);
           }
         });
       });
 
-      // Horas alocadas por skill
       alocs.forEach(a => {
         if (skillStats[a.competencia]) {
           skillStats[a.competencia].allocated += parseInt(a.esforco);
@@ -66,11 +63,9 @@ const Analytics = () => {
         .filter(s => s.ocupado > 0 || s.livre > 0)
         .sort((a, b) => b.percent - a.percent);
 
-      // 2. Disponibilidade Global
       const totalHours = funcs.reduce((sum, f) => sum + (f.carga_horaria_max || 40), 0);
       const allocatedHours = alocs.reduce((sum, a) => sum + parseInt(a.esforco), 0);
       
-      // 3. Funcionários Sobrecarregados
       const employeeEffort = {};
       alocs.forEach(a => {
         employeeEffort[a.funcionarioId] = (employeeEffort[a.funcionarioId] || 0) + parseInt(a.esforco);
@@ -85,13 +80,12 @@ const Analytics = () => {
         .filter(f => f.percent > 100)
         .sort((a, b) => b.percent - a.percent);
 
-      // 4. Insights Estratégicos
       const strategicInsights = occupancyBySkill.map(s => {
         if (s.percent >= 80) {
           return {
             skill: s.name,
             type: 'danger',
-            message: `Ocupação Crítica (${s.percent}%). Considere contratar mais especialistas ou expandir prazos.`,
+            message: `Ocupação Crítica (${s.percent}%). Recomenda-se contratação estratégica ou revisão de cronogramas.`,
             icon: '⚠️'
           };
         }
@@ -99,7 +93,7 @@ const Analytics = () => {
           return {
             skill: s.name,
             type: 'warning',
-            message: `Capacidade Ociosa (${s.percent}%). Profissionais podem ser realocados ou a demanda está baixa.`,
+            message: `Baixa Demanda (${s.percent}%). Especialistas disponíveis para novos projetos ou suporte técnico.`,
             icon: '💡'
           };
         }
@@ -110,7 +104,7 @@ const Analytics = () => {
         occupancyBySkill,
         globalAvailability: [
           { name: 'Alocado', value: allocatedHours, fill: '#3b82f6' },
-          { name: 'Disponível', value: Math.max(0, totalHours - allocatedHours), fill: '#e5e7eb' }
+          { name: 'Livre', value: Math.max(0, totalHours - allocatedHours), fill: '#f1f5f9' }
         ],
         overloadedEmployees,
         strategicInsights,
@@ -127,211 +121,298 @@ const Analytics = () => {
     }
   };
 
-  if (loading) return <div className="container" style={{ textAlign: 'center', padding: '5rem' }}>Gerando inteligência de dados...</div>;
+  if (loading) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1rem', color: '#64748b' }}>
+      <RefreshCw size={40} className="animate-spin" />
+      <p style={{ fontWeight: '500' }}>Processando Inteligência de Dados...</p>
+    </div>
+  );
 
   return (
-    <div className="container" style={{ paddingBottom: isMobile ? '80px' : '2rem' }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ margin: 0, fontSize: isMobile ? '1.5rem' : '2rem' }}>Inteligência de Alocação</h1>
-        <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>Análise profunda de capacidade, skills e saúde operacional</p>
-      </div>
-
-      <div className="stats-grid" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-        <div className="stat-card" style={{ flex: 1, minWidth: '200px', backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#6b7280', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Ocupação Média</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{data.stats.avgOccupancy}%</span>
-            <Activity size={24} color={data.stats.avgOccupancy > 90 ? '#ef4444' : '#3b82f6'} />
+    <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', paddingBottom: isMobile ? '100px' : '4rem' }}>
+      <div className="container" style={{ maxWidth: '1400px' }}>
+        
+        {/* Cabeçalho de Inteligência */}
+        <div style={{ marginBottom: '3rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: isMobile ? '1.75rem' : '2.25rem', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.025em' }}>
+              Inteligência de Alocação
+            </h1>
+            <p style={{ color: '#64748b', marginTop: '0.5rem', fontSize: '1.1rem' }}>Análise preditiva de capacidade e saúde da força de trabalho.</p>
           </div>
-        </div>
-        <div className="stat-card" style={{ flex: 1, minWidth: '200px', backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#6b7280', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Total Horas/Semana</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{data.stats.totalHours}h</span>
-            <Clock size={24} color="#10b981" />
-          </div>
-        </div>
-        <div className="stat-card" style={{ flex: 1, minWidth: '200px', backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#6b7280', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Skills Ativas</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{data.occupancyBySkill.length}</span>
-            <TrendingUp size={24} color="#8b5cf6" />
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-        <div className="card" style={{ padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-              <Users size={20} color="#3b82f6" /> Ocupação por Competência (Horas)
-            </h3>
-            <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <div style={{ width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '2px' }}></div> Crítico (&gt;80%)
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <div style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '2px' }}></div> Alerta (&lt;30%)
-              </span>
-            </div>
-          </div>
-          <div style={{ height: '400px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.occupancyBySkill} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f0f0f0" />
-                <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} interval={0} />
-                <Tooltip 
-                  cursor={{ fill: '#f9fafb' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const s = payload[0].payload;
-                      return (
-                        <div style={{ backgroundColor: '#fff', padding: '0.75rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
-                          <strong style={{ display: 'block', marginBottom: '0.25rem' }}>{s.name}</strong>
-                          <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>
-                            <p style={{ margin: 0 }}>Capacidade: {(s.ocupado + s.livre).toFixed(1)}h</p>
-                            <p style={{ margin: 0 }}>Alocado: {s.ocupado}h</p>
-                            <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: s.percent >= 80 ? '#ef4444' : s.percent <= 30 ? '#f59e0b' : '#3b82f6' }}>
-                              Uso: {s.percent}%
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="ocupado" stackId="a" radius={[0, 0, 0, 0]}>
-                  {data.occupancyBySkill.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.percent >= 80 ? '#ef4444' : entry.percent <= 30 ? '#f59e0b' : '#3b82f6'} 
-                    />
-                  ))}
-                </Bar>
-                <Bar dataKey="livre" name="Capacidade Ociosa" stackId="a" fill="#f1f5f9" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Activity size={20} color="#10b981" /> Disponibilidade de Time
-          </h3>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data.globalAvailability}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {data.globalAvailability.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>Capacidade utilizada</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' }}>{data.stats.allocatedHours}h de {data.stats.totalHours}h</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Insights Estratégicos */}
-      <div className="card" style={{ padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '2rem' }}>
-        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <TrendingUp size={20} color="#8b5cf6" /> Recomendações Estratégicas
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-          {data.strategicInsights.length > 0 ? (
-            data.strategicInsights.map((insight, idx) => (
-              <div 
-                key={idx} 
-                style={{ 
-                  padding: '1rem', 
-                  borderRadius: '10px', 
-                  backgroundColor: insight.type === 'danger' ? '#fef2f2' : '#fffbeb',
-                  borderLeft: `4px solid ${insight.type === 'danger' ? '#ef4444' : '#f59e0b'}`,
-                  display: 'flex',
-                  gap: '0.75rem',
-                  alignItems: 'flex-start'
-                }}
-              >
-                <span style={{ fontSize: '1.25rem' }}>{insight.icon}</span>
-                <div>
-                  <strong style={{ display: 'block', fontSize: '0.9rem', color: insight.type === 'danger' ? '#991b1b' : '#92400e', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                    {insight.skill}
-                  </strong>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: insight.type === 'danger' ? '#b91c1c' : '#b45309', lineHeight: '1.4' }}>
-                    {insight.message}
-                  </p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-              <CheckCircle size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-              <p>Capacidade operacional equilibrada. Nenhuma ação recomendada no momento.</p>
+          {!isMobile && (
+            <div style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%' }}></span>
+              Dados atualizados em tempo real
             </div>
           )}
         </div>
-      </div>
 
-      <div className="card" style={{ padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: data.overloadedEmployees.length > 0 ? '#ef4444' : '#111827' }}>
-          <AlertTriangle size={20} /> Atenção: Funcionários com Sobrecarga
-        </h3>
-        {data.overloadedEmployees.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#10b981' }}>
-            <CheckCircle size={32} style={{ marginBottom: '0.5rem' }} />
-            <p>Nenhum funcionário sobrecarregado no momento.</p>
+        {/* Estatísticas Chave */}
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+          <div className="card" style={{ padding: '1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', border: 'none', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05)' }}>
+            <div style={{ backgroundColor: '#eff6ff', padding: '1rem', borderRadius: '14px', border: '1px solid #dbeafe' }}>
+              <Activity size={30} color="#3b82f6" />
+            </div>
+            <div>
+              <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ocupação Média</div>
+              <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a' }}>{data.stats.avgOccupancy}%</div>
+            </div>
           </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Cargo</th>
-                  <th>Carga Máx</th>
-                  <th>Carga Atual</th>
-                  <th>Uso (%)</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.overloadedEmployees.map(f => (
-                  <tr key={f.id}>
-                    <td style={{ fontWeight: 'bold' }}>{f.nome}</td>
-                    <td>{f.cargo}</td>
-                    <td>{f.carga_horaria_max}h</td>
-                    <td style={{ color: '#ef4444', fontWeight: 'bold' }}>{f.effort}h</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ flex: 1, height: '8px', background: '#fee2e2', borderRadius: '4px', minWidth: '60px' }}>
-                          <div style={{ height: '100%', background: '#ef4444', width: `${Math.min(100, f.percent)}%`, borderRadius: '4px' }}></div>
-                        </div>
-                        <span>{f.percent}%</span>
-                      </div>
-                    </td>
-                    <td><span className="status-badge" style={{ background: '#fee2e2', color: '#b91c1c' }}>Sobrecarregado</span></td>
+          
+          <div className="card" style={{ padding: '1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', border: 'none', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05)' }}>
+            <div style={{ backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '14px', border: '1px solid #dcfce7' }}>
+              <Clock size={30} color="#10b981" />
+            </div>
+            <div>
+              <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Capacidade Total</div>
+              <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a' }}>{data.stats.totalHours}h<span style={{ fontSize: '0.9rem', color: '#94a3b8', marginLeft: '0.25rem', fontWeight: '500' }}>/sem</span></div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: '1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', border: 'none', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05)' }}>
+            <div style={{ backgroundColor: '#f5f3ff', padding: '1rem', borderRadius: '14px', border: '1px solid #ede9fe' }}>
+              <TrendingUp size={30} color="#8b5cf6" />
+            </div>
+            <div>
+              <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Especialidades</div>
+              <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a' }}>{data.occupancyBySkill.length}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Grid de Gráficos e Disponibilidade */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.8fr 1fr', gap: '2rem', marginBottom: '2.5rem' }}>
+          
+          {/* Card de Competências */}
+          <div className="card" style={{ padding: '2rem', border: 'none', borderRadius: '16px', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0, fontSize: '1.25rem', fontWeight: '700' }}>
+                <Users size={22} color="#3b82f6" fill="#3b82f615" /> Ocupação por Competência
+              </h3>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
+                  <span style={{ width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '2px' }}></span> Crítico (&gt;80%)
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
+                  <span style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '2px' }}></span> Alerta (&lt;30%)
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ height: '420px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.occupancyBySkill} layout="vertical" margin={{ left: 10, right: 30, top: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 600, fill: '#64748b' }} axisLine={false} tickLine={false} interval={0} />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const s = payload[0].payload;
+                        return (
+                          <div style={{ backgroundColor: '#1e293b', color: '#fff', padding: '1rem', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', border: 'none' }}>
+                            <strong style={{ display: 'block', marginBottom: '0.5rem', borderBottom: '1px solid #334155', paddingBottom: '0.5rem' }}>{s.name}</strong>
+                            <div style={{ fontSize: '0.85rem' }}>
+                              <p style={{ margin: '0 0 0.25rem 0', color: '#94a3b8' }}>Capacidade: <span style={{ color: '#fff', fontWeight: 'bold' }}>{(s.ocupado + s.livre).toFixed(1)}h</span></p>
+                              <p style={{ margin: '0 0 0.25rem 0', color: '#94a3b8' }}>Alocado: <span style={{ color: '#fff', fontWeight: 'bold' }}>{s.ocupado}h</span></p>
+                              <p style={{ margin: '0.5rem 0 0 0', fontWeight: 'bold', color: s.percent >= 80 ? '#f87171' : s.percent <= 30 ? '#fbbf24' : '#60a5fa' }}>
+                                Utilização: {s.percent}%
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="ocupado" stackId="a" radius={[0, 0, 0, 0]}>
+                    {data.occupancyBySkill.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.percent >= 80 ? '#ef4444' : entry.percent <= 30 ? '#f59e0b' : '#3b82f6'} 
+                      />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="livre" stackId="a" fill="#f1f5f9" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Card Disponibilidade de Time */}
+          <div className="card" style={{ padding: '2rem', border: 'none', borderRadius: '16px', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <h3 style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.25rem', fontWeight: '700', alignSelf: 'flex-start' }}>
+              <Activity size={22} color="#10b981" fill="#10b98115" /> Saúde de Alocação
+            </h3>
+            <div style={{ height: '300px', width: '100%', position: 'relative' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data.globalAvailability}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={75}
+                    outerRadius={100}
+                    paddingAngle={8}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {data.globalAvailability.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                <div style={{ fontSize: '2.5rem', fontWeight: '800', color: '#0f172a', lineHeight: '1' }}>{data.stats.avgOccupancy}%</div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', marginTop: '0.25rem' }}>Ocupado</div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 'auto', width: '100%', backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '12px' }}>
+              <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>Carga Horária Semanal</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', marginTop: '0.25rem' }}>{data.stats.allocatedHours}h <span style={{ color: '#cbd5e1', fontSize: '1.1rem' }}>/ {data.stats.totalHours}h</span></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recomendações de Gestão */}
+        <div className="card" style={{ padding: '2rem', border: 'none', borderRadius: '16px', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)', marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.35rem', color: '#0f172a', fontWeight: '800' }}>
+              <Zap size={24} color="#f59e0b" fill="#f59e0b20" /> Recomendações Estratégicas
+            </h3>
+            {data.strategicInsights.length > 0 && (
+              <span style={{ fontSize: '0.85rem', color: '#3b82f6', fontWeight: '700', backgroundColor: '#eff6ff', padding: '0.4rem 0.8rem', borderRadius: '9999px' }}>
+                {data.strategicInsights.length} Ações Sugeridas
+              </span>
+            )}
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.5rem' }}>
+            {data.strategicInsights.length > 0 ? (
+              data.strategicInsights.map((insight, idx) => (
+                <div 
+                  key={idx} 
+                  style={{ 
+                    padding: '1.5rem', 
+                    borderRadius: '16px', 
+                    backgroundColor: '#fff',
+                    border: `1px solid ${insight.type === 'danger' ? '#fee2e2' : '#fef3c7'}`,
+                    borderLeft: `6px solid ${insight.type === 'danger' ? '#ef4444' : '#f59e0b'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'default',
+                    position: 'relative'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 15px 30px -10px rgba(0,0,0,0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ 
+                      padding: '0.4rem 1rem', 
+                      borderRadius: '8px', 
+                      fontSize: '0.75rem', 
+                      fontWeight: '800',
+                      backgroundColor: insight.type === 'danger' ? '#fef2f2' : '#fffbeb',
+                      color: insight.type === 'danger' ? '#ef4444' : '#f59e0b',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      {insight.skill}
+                    </div>
+                    <span style={{ fontSize: '1.5rem' }}>{insight.icon}</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '1rem', color: '#334155', lineHeight: '1.6', fontWeight: '500' }}>
+                    {insight.message}
+                  </p>
+                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: insight.type === 'danger' ? '#ef4444' : '#f59e0b', fontSize: '0.85rem', fontWeight: '700' }}>
+                    Ação sugerida <ChevronRight size={14} />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', color: '#64748b', backgroundColor: '#fff', borderRadius: '20px', border: '2px dashed #e2e8f0' }}>
+                <div style={{ width: '64px', height: '64px', backgroundColor: '#f0fdf4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
+                  <CheckCircle size={32} color="#10b981" />
+                </div>
+                <h4 style={{ margin: 0, color: '#0f172a', fontSize: '1.25rem', fontWeight: '800' }}>Equilíbrio Operacional</h4>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem' }}>Toda a capacidade produtiva está operando dentro das margens ideais.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tabela de Sobrecarga */}
+        <div className="card" style={{ padding: '2rem', border: 'none', borderRadius: '16px', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: data.overloadedEmployees.length > 0 ? '#ef4444' : '#0f172a', fontWeight: '800', fontSize: '1.25rem' }}>
+            <AlertTriangle size={24} /> Atenção Crítica: Funcionários em Sobrecarga
+          </h3>
+          {data.overloadedEmployees.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#10b981', backgroundColor: '#f0fdf4', borderRadius: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', fontWeight: '700' }}>
+                <CheckCircle size={20} /> Zero ocorrências de sobrecarga detectadas.
+              </div>
+            </div>
+          ) : (
+            <div className="table-container" style={{ border: 'none', boxShadow: 'none' }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Nome do Profissional</th>
+                    <th>Cargo Principal</th>
+                    <th>Capacidade Máx</th>
+                    <th>Carga Atual</th>
+                    <th>Nível de Stress (%)</th>
+                    <th>Status de Saúde</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {data.overloadedEmployees.map(f => (
+                    <tr key={f.id}>
+                      <td style={{ fontWeight: '700', color: '#0f172a' }}>{f.nome}</td>
+                      <td style={{ color: '#64748b' }}>{f.cargo}</td>
+                      <td style={{ color: '#64748b', fontWeight: '600' }}>{f.carga_horaria_max}h/sem</td>
+                      <td style={{ color: '#ef4444', fontWeight: '800' }}>{f.effort}h</td>
+                      <td style={{ minWidth: '150px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{ flex: 1, height: '10px', background: '#f1f5f9', borderRadius: '5px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', background: '#ef4444', width: `${Math.min(100, f.percent)}%` }}></div>
+                          </div>
+                          <span style={{ color: '#ef4444', fontWeight: '800', fontSize: '0.85rem' }}>{f.percent}%</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ 
+                          padding: '0.4rem 0.8rem', 
+                          borderRadius: '9999px', 
+                          fontSize: '0.7rem', 
+                          fontWeight: '800',
+                          backgroundColor: '#fef2f2',
+                          color: '#b91c1c',
+                          textTransform: 'uppercase',
+                          border: '1px solid #fee2e2'
+                        }}>
+                          Crítico
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
