@@ -4,6 +4,7 @@ import { ArrowLeft, AlertTriangle, FileText, Download, Copy, Check } from 'lucid
 import { api } from '../services/api';
 import { aiService } from '../services/ai';
 import { jsPDF } from 'jspdf';
+import ReactMarkdown from 'react-markdown';
 
 const SkillGaps = () => {
   const navigate = useNavigate();
@@ -108,25 +109,84 @@ const SkillGaps = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownloadPDF = () => {
-    const doc = new jsPDF();
+  const parseMarkdown = (text) => {
+    if (!text) return '';
     
-    doc.setFontSize(18);
-    doc.setTextColor(31, 41, 55);
-    doc.text(`Vaga: Desenvolvedor(a) ${selectedGap.competencia}`, 20, 20);
+    // Limpeza de caracteres que podem causar artefatos no PDF
+    let cleanText = text.replace(/[^\x00-\x7F\u00C0-\u00FF\u0100-\u017F\u0180-\u024F\u1E00-\u1EFF]/g, '');
 
-    doc.setFontSize(12);
-    doc.setTextColor(107, 114, 128);
-    doc.text(`Projeto: ${selectedGap.projeto.nome}`, 20, 30);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 20, 38);
+    let html = cleanText
+      // Headers (com prevenção de quebra de página logo após o título)
+      .replace(/^### (.*$)/gm, '<h3 style="color: #111827; margin-top: 15px; margin-bottom: 5px; font-weight: bold; page-break-after: avoid;">$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2 style="color: #111827; margin-top: 20px; margin-bottom: 8px; font-weight: bold; page-break-after: avoid;">$1</h2>')
+      
+      // Bold
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      
+      // Lists (com prevenção de quebra de página dentro do item)
+      .replace(/^\s*[\*\-]\s+(.*)$/gm, '<li style="page-break-inside: avoid; margin-bottom: 4px;">$1</li>')
+      
+      // Line breaks
+      .replace(/\n/g, '<br>');
 
-    doc.setFontSize(11);
-    doc.setTextColor(55, 65, 81);
+    // Envolver grupos de <li> em <ul>
+    html = html.replace(/(<li>.*<\/li>(\s*<br>\s*<li>.*<\/li>)*)/g, (match) => {
+      return `<ul style="padding-left: 15px; margin-top: 5px; margin-bottom: 10px; page-break-inside: auto;">${match.replace(/<br>/g, '')}</ul>`;
+    });
     
-    const splitText = doc.splitTextToSize(generatedText, 170);
-    doc.text(splitText, 20, 50);
+    return html;
+  };
 
-    doc.save(`vaga-${selectedGap.competencia.toLowerCase()}-${selectedGap.projeto.nome.toLowerCase().replace(/\\s+/g, '-')}.pdf`);
+  const handleDownloadPDF = async () => {
+    const doc = new jsPDF('p', 'pt', 'a4');
+    const element = document.createElement('div');
+    
+    // Configura o elemento temporário
+    element.style.width = '550px';
+    element.style.background = 'white';
+    // Adicionamos um padding no fundo para garantir que o conteúdo não encoste na borda da página
+    element.innerHTML = `
+      <div style="padding: 40px; padding-bottom: 60px; font-family: 'Helvetica', sans-serif; color: #1f2937; line-height: 1.4;">
+        <h1 style="color: #3b82f6; font-size: 20px; margin-bottom: 5px; font-weight: bold;">Vaga: Desenvolvedor(a) ${selectedGap.competencia}</h1>
+        <p style="color: #64748b; font-size: 11px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
+          Projeto: ${selectedGap.projeto.nome} | Gerado em: ${new Date().toLocaleDateString()}
+        </p>
+        <div style="font-size: 10.5px; color: #334155;">
+          ${parseMarkdown(generatedText)}
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(element);
+    
+    try {
+      await doc.html(element, {
+        callback: function (doc) {
+          // Verifica se foram geradas múltiplas páginas
+          const pageCount = doc.internal.getNumberOfPages();
+          doc.save(`vaga-${selectedGap.competencia.toLowerCase()}-${selectedGap.projeto.nome.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+          if (document.body.contains(element)) document.body.removeChild(element);
+        },
+        x: 0,
+        y: 0,
+        width: 595,
+        windowWidth: 595,
+        autoPaging: 'text', // Tenta quebrar a página preferencialmente entre blocos de texto
+        margin: [0, 0, 40, 0] // Margem inferior de segurança para a quebra de página
+      });
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      if (document.body.contains(element)) document.body.removeChild(element);
+      alert('Erro ao gerar PDF formatado. Gerando versão simplificada...');
+      
+      const simpleDoc = new jsPDF();
+      simpleDoc.setFontSize(14);
+      simpleDoc.text(`Vaga: ${selectedGap.competencia}`, 20, 20);
+      simpleDoc.setFontSize(10);
+      const lines = simpleDoc.splitTextToSize(generatedText.replace(/\*\*/g, ''), 170);
+      simpleDoc.text(lines, 20, 40);
+      simpleDoc.save(`vaga-simples.pdf`);
+    }
   };
 
   if (loading) return <div className="container" style={{ textAlign: 'center', padding: '5rem' }}>Carregando...</div>;
@@ -296,17 +356,16 @@ const SkillGaps = () => {
                     backgroundColor: '#fff', 
                     border: '1px solid #e2e8f0', 
                     borderRadius: '16px', 
-                    padding: '1.5rem', 
-                    whiteSpace: 'pre-wrap', 
+                    padding: '2rem', 
                     fontFamily: 'inherit', 
-                    fontSize: '0.9rem', 
+                    fontSize: '0.95rem', 
                     color: '#334155',
                     maxHeight: '400px',
                     overflowY: 'auto',
                     lineHeight: '1.6',
                     boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
-                  }}>
-                    {generatedText}
+                  }} className="markdown-content">
+                    <ReactMarkdown>{generatedText}</ReactMarkdown>
                   </div>
                   <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
                     <button className="btn btn-secondary" onClick={() => setGeneratedText('')} style={{ border: 'none', color: '#64748b' }}>

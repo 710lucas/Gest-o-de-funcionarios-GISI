@@ -312,7 +312,7 @@ export const aiService = {
       4. Requisitos (além do ${skill})
       5. O que oferecemos (Salário e benefícios)
       
-      Use um tom engajador e moderno. Retorne APENAS o texto da vaga, sem comentários extras.
+      Use um tom engajador e moderno. Retorne APENAS o texto da vaga em formato Markdown simples (use apenas ** para negrito, ### para títulos e * para listas). NÃO use emojis ou ícones especiais, pois eles quebram a exportação para PDF.
     `;
 
     return await this.callAIForText(config, prompt);
