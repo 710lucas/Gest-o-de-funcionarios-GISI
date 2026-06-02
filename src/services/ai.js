@@ -7,49 +7,36 @@ export const aiService = {
       throw new Error('API Key não configurada');
     }
 
-    const allData = await api.getAll();
+    const [allData, projects, allocations] = await Promise.all([
+      api.getAll(),
+      api.getAllProjetos(),
+      api.getAllAlocacoes()
+    ]);
+
     const dataSchema = {
-      entidade: 'funcionario',
-      campos: ['id', 'nome', 'cargo', 'departamento', 'salario', 'data_admissao']
+      funcionarios: ['id', 'nome', 'cargo', 'departamento', 'salario', 'competencias', 'carga_horaria_max'],
+      projetos: ['id', 'nome', 'descricao', 'status', 'requisitos'],
+      alocacoes: ['funcionarioId', 'projetoId', 'competencia', 'esforco']
     };
 
     const systemPrompt = `
-      Você é um assistente de análise de dados para um sistema de gestão de funcionários.
-      O banco de dados possui a seguinte estrutura: ${JSON.stringify(dataSchema)}.
+      Você é um assistente de análise de dados para um sistema de planejamento de recursos (ERM).
+      O banco de dados possui as seguintes entidades: ${JSON.stringify(dataSchema)}.
       
       Sua tarefa é responder a perguntas do usuário gerando um plano de execução em JSON.
       O plano deve conter:
-      1. "entities": lista de entidades afetadas (neste caso, sempre ['funcionario']).
-      2. "queryScript": um script JavaScript (função anônima) que recebe um array 'data' e retorna um objeto contendo os datasets necessários para os gráficos. 
+      1. "entities": lista de entidades afetadas (ex: ['funcionarios', 'projetos']).
+      2. "queryScript": um script JavaScript (função anônima) que recebe um objeto 'context' contendo { funcionarios, projetos, alocacoes } e retorna um objeto contendo os datasets necessários para os gráficos. 
          Exemplo: { data1: [...], data2: [...] }
-      3. "charts": uma lista de configurações de gráficos para Recharts. Se o usuário não especificar o tipo de gráfico, escolha o mais adequado para os dados (ex: 'pie' para proporções, 'line' ou 'area' para séries temporais, 'bar' para comparações, 'card' para indicadores únicos ou totais).
-         Cada item deve conter:
-         - "type": 'bar', 'line', 'pie', 'area' ou 'card'.
-         - "xAxis": o campo para o eixo X (não necessário para 'card').
-         - "dataKey": o campo para os valores.
-         - "datasetName": o nome da chave correspondente no retorno do queryScript.
-         - "title": título do gráfico ou indicador.
-         - "prefix": (opcional para 'card') ex: 'R$ '.
-         - "suffix": (opcional para 'card') ex: ' func.'.
+      3. "charts": lista de configurações de gráficos para Recharts.
       4. "explanation": breve explicação do que será feito.
 
-      Exemplo de resposta:
-      {
-        "entities": ["funcionario"],
-        "queryScript": "const years = [2023, 2024, 2025]; const stats = years.map(y => ({ year: y, count: data.filter(f => f.data_admissao.startsWith(y.toString())).length })); return { timeData: stats };",
-        "charts": [
-          {
-            "type": "area",
-            "xAxis": "year",
-            "dataKey": "count",
-            "datasetName": "timeData",
-            "title": "Crescimento de Funcionários por Ano"
-          }
-        ],
-        "explanation": "Vou analisar a tendência de contratações nos últimos 3 anos utilizando um gráfico de área para destacar o volume acumulado."
-      }
+      Regras de Negócio:
+      - Carga Horária: Cada funcionário tem um 'carga_horaria_max' (geralmente 40h).
+      - Ocupação: A soma do 'esforco' nas 'alocacoes' de um funcionário define seu uso atual.
+      - Gaps: Se um projeto tem um requisito de skill e não há alocações suficientes, existe um GAP.
 
-      IMPORTANTE: Retorne APENAS o JSON. Gere múltiplos gráficos se a pergunta for complexa ou se diferentes perspectivas ajudarem na compreensão.
+      IMPORTANTE: Retorne APENAS o JSON.
     `;
 
     let response;
@@ -68,16 +55,8 @@ export const aiService = {
     // Executar o script gerado
     let datasets = {};
     try {
-      const executeQuery = new Function('data', aiResult.queryScript);
-      datasets = executeQuery(allData);
-      
-      // Se a IA retornar um array diretamente (retrocompatibilidade/erro de lógica da IA), tentamos normalizar
-      if (Array.isArray(datasets)) {
-        datasets = { default: datasets };
-        if (aiResult.charts) {
-          aiResult.charts.forEach(c => c.datasetName = 'default');
-        }
-      }
+      const executeQuery = new Function('context', aiResult.queryScript);
+      datasets = executeQuery({ funcionarios: allData, projetos: projects, alocacoes: allocations });
     } catch (e) {
       console.error('Erro ao executar queryScript da IA:', e);
       throw new Error('A IA gerou um script de consulta inválido.');
@@ -225,24 +204,30 @@ export const aiService = {
       throw new Error('API Key não configurada');
     }
 
-    const allData = await api.getAll();
+    const [allData, projects, allocations] = await Promise.all([
+      api.getAll(),
+      api.getAllProjetos(),
+      api.getAllAlocacoes()
+    ]);
+
     const dataSchema = {
-      entidade: 'funcionario',
-      campos: ['id', 'nome', 'cargo', 'departamento', 'salario', 'data_admissao']
+      funcionarios: ['id', 'nome', 'cargo', 'departamento', 'salario', 'competencias', 'carga_horaria_max'],
+      projetos: ['id', 'nome', 'descricao', 'status', 'requisitos'],
+      alocacoes: ['funcionarioId', 'projetoId', 'competencia', 'esforco']
     };
 
-    const finalPrompt = userPrompt && userPrompt.trim() !== '' ? userPrompt : "Gere um relatório mensal padrão cobrindo panorama de pessoas, diversidade de cargos e análise salarial.";
+    const finalPrompt = userPrompt && userPrompt.trim() !== '' ? userPrompt : "Gere um relatório mensal padrão cobrindo panorama de pessoas, diversidade de cargos, análise salarial e ocupação de projetos.";
 
     const systemPrompt = `
       Você é um Desenvolvedor Sênior e Analista de Dados. Gere o plano de um RELATÓRIO EXECUTIVO FORMAL.
-      Banco de dados (Array 'inputData'): ${JSON.stringify(dataSchema)}.
+      Banco de dados (Objeto 'context'): ${JSON.stringify(dataSchema)}.
       Objetivo: "${finalPrompt}"
 
       RETORNE APENAS UM JSON NO FORMATO:
       {
         "reportTitle": "Título Formal",
         "period": "Referência Temporal",
-        "queryScript": "CÓDIGO JS VÁLIDO. Recebe 'inputData'. Deve retornar um objeto com os datasets mapeados.",
+        "queryScript": "CÓDIGO JS VÁLIDO. Recebe 'context' { funcionarios, projetos, alocacoes }. Deve retornar um objeto com os datasets mapeados.",
         "sections": [
           {
             "id": "s1",
@@ -278,11 +263,10 @@ export const aiService = {
     // 2. Executar QueryScript
     let datasets = {};
     try {
-      // Usamos apenas 'inputData' como parâmetro para permitir que a IA declare 'const data = ...' sem erro de sintaxe
-      const executeQuery = new Function('inputData', `
+      const executeQuery = new Function('context', `
         ${reportPlan.queryScript.includes('return') ? reportPlan.queryScript : 'return ' + reportPlan.queryScript}
       `);
-      datasets = executeQuery(allData);
+      datasets = executeQuery({ funcionarios: allData, projetos: projects, alocacoes: allocations });
     } catch (e) {
       console.error('Erro ao executar queryScript da IA:', e);
       throw new Error('A IA gerou um script de consulta inválido.');
