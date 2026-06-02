@@ -135,26 +135,65 @@ const Projetos = () => {
       .sort((a, b) => a.esforcoAtual - b.esforcoAtual);
   };
 
-  const StatCard = ({ title, value, icon: IconComponent, color, onClick }) => (
-    <div className="stat-card" onClick={onClick} style={{ 
-      padding: isMobile ? '1rem' : '1.5rem', 
-      borderRadius: '8px', 
-      boxShadow: '0 4px 6px rgba(0,0,0,0.05)', 
-      backgroundColor: '#fff', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '1rem', 
-      flexGrow: '1',
-      cursor: onClick ? 'pointer' : 'default',
-      transition: onClick ? 'transform 0.2s' : 'none'
-    }}>
-      <div style={{ backgroundColor: `${color}20`, padding: isMobile ? '0.75rem' : '1rem', borderRadius: '50%', display: 'flex' }}>
-        <IconComponent size={isMobile ? 24 : 32} color={color} />
+  const StatCard = ({ title, value, icon: IconComponent, color, onClick, highlighted }) => (
+    <div 
+      className={`stat-card ${highlighted ? 'highlighted' : ''}`} 
+      onClick={onClick} 
+      style={{ 
+        padding: isMobile ? '1.25rem' : '1.5rem', 
+        borderRadius: '16px', 
+        boxShadow: highlighted ? `0 10px 15px -3px ${color}20` : '0 4px 6px -1px rgba(0,0,0,0.05)', 
+        backgroundColor: '#fff', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '1.25rem', 
+        flexGrow: '1',
+        cursor: onClick ? 'pointer' : 'default',
+        border: highlighted ? `2px solid ${color}` : '1px solid #f1f5f9',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
+      <div style={{ 
+        backgroundColor: `${color}15`, 
+        padding: isMobile ? '0.75rem' : '1rem', 
+        borderRadius: '12px', 
+        display: 'flex',
+        color: color
+      }}>
+        <IconComponent size={isMobile ? 24 : 30} strokeWidth={2.5} />
       </div>
-      <div>
-        <div className="stat-label" style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: '600', textTransform: 'uppercase' }}>{title}</div>
-        <div className="stat-value" style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 'bold', color: '#111827' }}>{value}</div>
+      <div style={{ flex: 1 }}>
+        <div className="stat-label" style={{ 
+          fontSize: '0.7rem', 
+          color: '#64748b', 
+          fontWeight: '700', 
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          marginBottom: '0.25rem'
+        }}>{title}</div>
+        <div className="stat-value" style={{ 
+          fontSize: isMobile ? '1.5rem' : '1.75rem', 
+          fontWeight: '800', 
+          color: '#0f172a',
+          lineHeight: 1
+        }}>{value}</div>
       </div>
+      {onClick && (
+        <div style={{ 
+          position: 'absolute', 
+          right: '1rem', 
+          bottom: '1rem', 
+          fontSize: '0.6rem', 
+          fontWeight: '800', 
+          color: color,
+          textTransform: 'uppercase',
+          opacity: 0.8,
+          display: isMobile ? 'none' : 'block'
+        }}>
+          Ver Detalhes →
+        </div>
+      )}
     </div>
   );
 
@@ -188,6 +227,7 @@ const Projetos = () => {
           icon={AlertTriangle} 
           color="#ef4444" 
           onClick={() => navigate('/skill-gaps')}
+          highlighted={true}
         />
       </div>
 
