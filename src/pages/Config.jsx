@@ -139,13 +139,8 @@ const Config = () => {
                     value={apiUrl}
                     onChange={(e) => setApiUrl(e.target.value)}
                     placeholder="http://localhost:8080/funcionarios"
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      fontSize: isMobile ? '0.875rem' : '0.95rem'
-                    }}
+                    className="form-input"
+                    style={{ flex: 1 }}
                   />
                   <button 
                     className="btn btn-secondary" 
@@ -388,7 +383,7 @@ const Config = () => {
                     <select
                       value={aiConfig.provider}
                       onChange={(e) => setAiConfig({ ...aiConfig, provider: e.target.value })}
-                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                      className="form-input"
                     >
                       <option value="gemini">Google Gemini</option>
                       <option value="openai">OpenAI</option>
@@ -404,7 +399,7 @@ const Config = () => {
                       value={aiConfig.model}
                       onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
                       placeholder={aiConfig.provider === 'gemini' ? 'gemini-2.5-flash' : 'gpt-4o'}
-                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                      className="form-input"
                     />
                   </div>
                 </div>
@@ -419,7 +414,8 @@ const Config = () => {
                       value={aiConfig.apiKey}
                       onChange={(e) => setAiConfig({ ...aiConfig, apiKey: e.target.value })}
                       placeholder="Sua chave de API"
-                      style={{ width: '100%', padding: '0.5rem', paddingRight: '2.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                      className="form-input"
+                      style={{ paddingRight: '2.5rem' }}
                     />
                     <button
                       type="button"
@@ -441,7 +437,7 @@ const Config = () => {
                       value={aiConfig.baseUrl}
                       onChange={(e) => setAiConfig({ ...aiConfig, baseUrl: e.target.value })}
                       placeholder={aiConfig.provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : 'https://seu-proxy.com/api'}
-                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' }}
+                      className="form-input"
                     />
                   </div>
                 )}

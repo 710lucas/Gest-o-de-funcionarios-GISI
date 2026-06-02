@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
+import { Loader2, Save, Trash2, Edit3 } from 'lucide-react';
 
 const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) => {
   const [formData, setFormData] = useState(funcionario || {});
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   
   const competenciasDisponiveis = api.getCompetenciasPadrao();
@@ -41,14 +43,33 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave({ ...formData, id: funcionario.id });
-    onClose();
+    setLoading(true);
+    try {
+      await onSave({ ...formData, id: funcionario.id });
+      onClose();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteWithLoading = async (id) => {
+    setLoading(true);
+    try {
+      await onDelete(id);
+      onClose();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && !loading) {
       onClose();
     }
   };
@@ -188,34 +209,45 @@ const FuncionarioModal = ({ funcionario, isOpen, onClose, onSave, onDelete }) =>
                 <button 
                   type="button" 
                   className="btn btn-primary"
+                  disabled={loading}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setIsEditing(true);
                   }}
                 >
+                  <Edit3 size={18} />
                   Editar
                 </button>
                 <button 
                   type="button" 
                   className="btn btn-danger"
+                  disabled={loading}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    onDelete(formData.id);
+                    handleDeleteWithLoading(formData.id);
                   }}
                 >
+                  {loading ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
                   Excluir
                 </button>
               </>
             ) : (
               <>
-                <button type="submit" className="btn btn-success">
+                <button 
+                  type="submit" 
+                  className="btn btn-success"
+                  disabled={loading}
+                  style={{ backgroundColor: '#22c55e', color: 'white' }}
+                >
+                  {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                   Salvar Alterações
                 </button>
                 <button 
                   type="button" 
                   className="btn btn-secondary"
+                  disabled={loading}
                   onClick={() => {
                     setIsEditing(false);
                     setFormData(funcionario);

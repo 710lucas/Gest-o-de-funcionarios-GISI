@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Briefcase, Plus, Users, AlertTriangle, CheckCircle, Search, Trash2, Edit3, ClipboardList, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { Briefcase, Plus, Users, AlertTriangle, CheckCircle, Search, Trash2, Edit3, ClipboardList, TrendingUp, ChevronDown, ChevronUp, X } from 'lucide-react';
 
 const Projetos = () => {
   const navigate = useNavigate();
@@ -239,17 +239,35 @@ const Projetos = () => {
         <input
           type="text"
           placeholder="Procurar funcionário em projetos..."
+          aria-label="Procurar funcionário em projetos"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          className="form-input"
           style={{
-            width: '100%',
-            padding: '0.75rem 1rem 0.75rem 3rem',
-            borderRadius: '8px',
-            border: '1px solid #e5e7eb',
-            fontSize: '1rem',
+            paddingLeft: '3rem',
+            paddingRight: searchTerm ? '3rem' : '1rem',
             boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
           }}
         />
+        {searchTerm && (
+          <button 
+            onClick={() => setSearchTerm('')}
+            style={{ 
+              position: 'absolute', 
+              right: '1rem', 
+              top: '50%', 
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              color: '#9ca3af',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {projetos.length === 0 ? (

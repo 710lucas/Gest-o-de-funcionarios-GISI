@@ -201,14 +201,15 @@ const Relatorios = () => {
 
       <div className="card" style={{ marginBottom: '3rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 15px -3px rgba(0,0,0,0.05)', borderRadius: '12px' }}>
         <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 700, color: '#1e293b', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Briefing de Análise</label>
+          <div className="form-group">
+            <label className="form-label">Briefing de Análise</label>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Descreva o foco estratégico (ex: Impacto salarial por departamento, tendência de contratações...)"
               rows={3}
-              style={{ width: '100%', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: '1rem', color: '#1e293b', outline: 'none' }}
+              className="form-input"
+              style={{ backgroundColor: '#f8fafc', resize: 'vertical' }}
               disabled={!isConfigured || loading}
             />
           </div>

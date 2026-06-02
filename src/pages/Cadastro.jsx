@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loader2, UserPlus } from 'lucide-react';
 import { api } from '../services/api';
 
 const Cadastro = () => {
     const navigate = useNavigate();
     const [isMobile, setIsMobile] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         nome: '',
         cargo: '',
@@ -42,6 +44,7 @@ const Cadastro = () => {
             return;
         }
 
+        setLoading(true);
         try {
             await api.create(formData);
             alert('Funcionário cadastrado com sucesso!');
@@ -49,6 +52,8 @@ const Cadastro = () => {
         } catch (error) {
             console.error('Erro ao cadastrar:', error);
             alert('Erro ao cadastrar funcionário: ' + (error.message || 'Erro desconhecido'));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -132,13 +137,19 @@ const Cadastro = () => {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>
-                        <button type="submit" className="btn btn-primary">
-                            Cadastrar
+                        <button 
+                            type="submit" 
+                            className="btn btn-primary"
+                            disabled={loading}
+                        >
+                            {loading ? <Loader2 className="animate-spin" size={20} /> : <UserPlus size={20} />}
+                            {loading ? 'Cadastrando...' : 'Cadastrar'}
                         </button>
                         <button 
                             type="button" 
                             className="btn btn-secondary"
                             onClick={() => navigate('/')}
+                            disabled={loading}
                         >
                             Cancelar
                         </button>

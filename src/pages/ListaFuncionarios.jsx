@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import FuncionarioModal from '../components/FuncionarioModal';
-import { Search, Filter, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Search, Filter, AlertTriangle, CheckCircle, Clock, X } from 'lucide-react';
 
 const ListaFuncionarios = () => {
   const [funcionarios, setFuncionarios] = useState([]);
@@ -129,17 +129,42 @@ const ListaFuncionarios = () => {
           <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>Gerencie sua força de trabalho e visualize disponibilidades</p>
         </div>
 
-        <div className="form-grid" style={{ gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: '1rem', alignItems: 'center' }}>
+        <div className="form-grid" style={{ 
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', 
+          gap: isMobile ? '0.75rem' : '1rem', 
+          alignItems: 'center' 
+        }}>
           <div style={{ position: 'relative' }}>
             <Search size={18} color="#9ca3af" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
             <input 
               type="text" 
               placeholder="Buscar por nome, cargo ou depto..." 
               className="form-input"
-              style={{ paddingLeft: '40px' }}
+              style={{ paddingLeft: '40px', paddingRight: searchTerm ? '40px' : '12px' }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Buscar funcionários"
             />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                style={{ 
+                  position: 'absolute', 
+                  right: '12px', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#9ca3af',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fff', padding: '0.25rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>

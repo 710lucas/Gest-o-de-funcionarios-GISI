@@ -246,12 +246,10 @@ const AIChat = ({ isMobile }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={isConfigured ? `Ex: ${placeholder}` : "Configure a API Key para começar..."}
+          aria-label="Pergunta para o assistente de IA"
+          className="form-input"
           style={{ 
             flex: 1, 
-            padding: '0.75rem 1rem', 
-            borderRadius: '8px', 
-            border: '1px solid #d1d5db',
-            fontSize: isMobile ? '0.875rem' : '1rem',
             transition: 'all 0.3s ease',
             backgroundColor: isConfigured ? '#fff' : '#f3f4f6',
             cursor: isConfigured ? 'text' : 'not-allowed'
