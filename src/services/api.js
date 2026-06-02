@@ -8,29 +8,31 @@ const AI_CONFIG_KEY = 'ai_config';
 
 // Definições Globais para Sincronia de Dados
 const SKILLS_POR_CARGO = {
-  'Desenvolvedor': ['React', 'JavaScript', 'TypeScript', 'Node.js', 'SQL'],
-  'Analista de Sistemas': ['Java', 'Spring Boot', 'SQL', 'NoSQL'],
-  'Especialista em Cloud': ['AWS', 'Docker', 'Kubernetes', 'Python'],
-  'Engenheiro DevOps': ['Docker', 'Kubernetes', 'AWS', 'Python'],
-  'Designer': ['Design UI/UX', 'Figma', 'React', 'CSS'],
-  'Especialista em UX': ['Design UI/UX', 'Figma', 'Análise de Dados'],
-  'Gerente': ['Gestão de Projetos', 'Liderança', 'Análise de Dados'],
-  'Analista': ['Análise de Dados', 'SQL', 'Python', 'Excel'],
-  'Coordenador': ['Gestão de Projetos', 'Liderança', 'Planejamento'],
-  'Financeiro': ['Excel', 'ERP', 'Análise de Dados'],
-  'Marketing': ['Análise de Dados', 'SEO', 'Copywriting']
+  'Desenvolvedor': ['React', 'JavaScript', 'TypeScript', 'Node.js', 'SQL', 'Git', 'Clean Code', 'Inglês'],
+  'Analista de Sistemas': ['Java', 'Spring Boot', 'SQL', 'NoSQL', 'UML', 'Metodologias Ágeis', 'Azure'],
+  'Especialista em Cloud': ['AWS', 'Docker', 'Kubernetes', 'Python', 'Terraform', 'Linux', 'Segurança da Informação'],
+  'Engenheiro DevOps': ['Docker', 'Kubernetes', 'AWS', 'Python', 'CI/CD', 'Jenkins', 'Monitoramento'],
+  'Designer': ['Design UI/UX', 'Figma', 'Adobe XD', 'Photoshop', 'Prototipagem', 'Criatividade'],
+  'Especialista em UX': ['Design UI/UX', 'Figma', 'Pesquisa de Usuário', 'Testes A/B', 'Arquitetura de Informação'],
+  'Gerente': ['Gestão de Projetos', 'Liderança', 'Comunicação', 'Resolução de Conflitos', 'Planejamento Estratégico'],
+  'Analista': ['Análise de Dados', 'SQL', 'Python', 'Excel Avançado', 'Power BI', 'Storytelling de Dados'],
+  'Coordenador': ['Gestão de Equipes', 'Liderança', 'Mentoria', 'KPIs', 'Gestão de Tempo'],
+  'Financeiro': ['Análise Financeira', 'ERP', 'Tesouraria', 'Contabilidade', 'Excel Avançado', 'Compliance'],
+  'Marketing': ['Estratégia Digital', 'SEO', 'Copywriting', 'Google Ads', 'Redes Sociais', 'Análise de Mercado']
 };
 
 const CARGOS_POR_DEPTO = {
   'TI': ['Desenvolvedor', 'Analista de Sistemas', 'Especialista em Cloud', 'Engenheiro DevOps'],
   'Marketing': ['Designer', 'Especialista em UX', 'Marketing'],
-  'RH': ['Gerente', 'Analista'],
+  'RH': ['Gerente', 'Analista', 'Coordenador'],
   'Financeiro': ['Financeiro', 'Analista'],
-  'Vendas': ['Coordenador', 'Analista'],
-  'Operações': ['Coordenador', 'Analista']
+  'Vendas': ['Coordenador', 'Analista', 'Marketing'],
+  'Operações': ['Coordenador', 'Analista', 'Gerente']
 };
 
-const COMPETENCIAS_PADRAO = [...new Set(Object.values(SKILLS_POR_CARGO).flat())];
+const COMPETENCIAS_SOFT = ['Comunicação', 'Liderança', 'Trabalho em Equipe', 'Proatividade', 'Inteligência Emocional', 'Adaptabilidade', 'Pensamento Crítico'];
+
+const COMPETENCIAS_PADRAO = [...new Set([...Object.values(SKILLS_POR_CARGO).flat(), ...COMPETENCIAS_SOFT])];
 
 // Configuração padrão
 const getConfig = () => {
@@ -82,12 +84,15 @@ const generateDefaultData = () => {
     const mes = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
     const dia = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
     
-    // Atribuir competências baseadas no cargo
+    // Atribuir competências baseadas no cargo + Algumas Soft Skills
     let poolSkills = SKILLS_POR_CARGO[cargo] || SKILLS_POR_CARGO[cargo.split(' ')[0]] || COMPETENCIAS_PADRAO;
-    const numComp = 2 + Math.floor(Math.random() * 2);
-    const compFunc = [...poolSkills]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, numComp);
+    const numCompTech = 2 + Math.floor(Math.random() * 2);
+    const numCompSoft = 1 + Math.floor(Math.random() * 2);
+    
+    const compFunc = [
+      ...[...poolSkills].sort(() => 0.5 - Math.random()).slice(0, numCompTech),
+      ...[...COMPETENCIAS_SOFT].sort(() => 0.5 - Math.random()).slice(0, numCompSoft)
+    ];
 
     funcionarios.push({
       id: i + 1,
