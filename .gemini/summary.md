@@ -2,7 +2,7 @@
 
 **Status:** In Development — Sprint 8 (Correção de Relatórios IA & Base de Dados Saudável)
 
-O assistente de IA e o gerador de relatórios executivos foram aprimorados para maior robustez. Além disso, a geração de dados padrão agora garante um cenário de saúde operacional realista.
+O assistente de IA e o gerador de alocações foram aprimorados. A geração de dados agora garante saúde operacional tanto no nível individual (funcionários) quanto no nível organizacional (competências).
 
 ## What Exists
 - **Frontend:** React + Vite, Design System Moderno e responsivo.
@@ -10,9 +10,9 @@ O assistente de IA e o gerador de relatórios executivos foram aprimorados para 
 - **IA Dashboard & Relatórios (Aprimorada):** 
   - Geração de gráficos Recharts e métricas via scripts dinâmicos (queryScript).
   - Execução segura e robusta via sombreamento de escopo em bloco (evita SyntaxError de redeclaração).
-- **Base de Dados Saudável:**
+- **Base de Dados Saudável & Equilibrada:**
   - Geração automática de alocações limitada a no máximo **5% de funcionários sobrecarregados**.
-  - Equilíbrio de carga horária priorizado durante a população de dados.
+  - **Saúde por Competência:** O esforço total por skill é limitado a **105% da capacidade total disponível**, evitando gargalos técnicos generalizados.
 - **Relatórios & Vagas:** Geração de PDFs executivos e descrições de vagas via IA.
 
 

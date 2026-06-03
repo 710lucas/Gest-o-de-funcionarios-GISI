@@ -166,11 +166,14 @@ const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) =
   const esforcoOcupado = {};
   const esforcoPorCompetencia = {};
   
-  // 1. Calcular capacidade total disponível por competência
+  // 1. Calcular capacidade total disponível por competência (Alinhado com Analytics.jsx)
   const capacidadePorCompetencia = {};
   funcionarios.forEach(f => {
+    const numComps = (f.competencias || []).length || 1;
+    const cargaPorComp = (f.carga_horaria_max || 40) / numComps;
+    
     (f.competencias || []).forEach(comp => {
-      capacidadePorCompetencia[comp] = (capacidadePorCompetencia[comp] || 0) + (f.carga_horaria_max || 40);
+      capacidadePorCompetencia[comp] = (capacidadePorCompetencia[comp] || 0) + cargaPorComp;
     });
   });
 
@@ -183,9 +186,9 @@ const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) =
       const vagasParaPreencher = req.quantidade;
       let alocadosCount = 0;
 
-      // 2. Verificar se a competência já atingiu o limite de sobrecarga (105% da capacidade)
+      // 2. Limite de sobrecarga da competência (95% da capacidade distribuída para manter saudável)
       const capTotalSkill = capacidadePorCompetencia[req.competencia] || 0;
-      const limiteEsforcoSkill = capTotalSkill * 1.05;
+      const limiteEsforcoSkill = forceStress ? capTotalSkill * 1.2 : capTotalSkill * 0.95;
 
       const candidatos = funcionarios.filter(f => {
         const temSkill = (f.competencias || []).includes(req.competencia);
@@ -194,7 +197,7 @@ const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) =
         const esforcoAtual = esforcoOcupado[f.id] || 0;
         const limite = (f.carga_horaria_max || 40);
 
-        // Se a alocação desta skill específica estourar o limite de 105% da capacidade da empresa para essa skill
+        // Se a alocação desta skill estourar o limite organizacional de 95% para essa skill
         const esforcoFuturoSkill = (esforcoPorCompetencia[req.competencia] || 0) + req.esforço_por_pessoa;
         if (esforcoFuturoSkill > limiteEsforcoSkill && !forceStress) return false;
         
@@ -225,7 +228,7 @@ const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) =
         const esforcoAtual = esforcoOcupado[cand.id] || 0;
         const limite = (cand.carga_horaria_max || 40);
 
-        // Validação final de segurança para o pool de sobrecarga individual
+        // Validação de segurança para sobrecarga individual
         if (esforcoAtual + req.esforço_por_pessoa > limite) {
           if (idsSobrecarregados.size >= limiteSobrecarregados && !idsSobrecarregados.has(cand.id)) {
             continue;
