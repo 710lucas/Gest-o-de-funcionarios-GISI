@@ -45,8 +45,9 @@ O sistema implementa uma lógica de geração de dados "saudáveis" para evitar 
 Durante a geração automática de alocações (população inicial ou reset de banco), o algoritmo segue as seguintes restrições:
 
 1.  **Distribuição de Carga:** O algoritmo prioriza alocar funcionários com menor carga horária atual para equilibrar o esforço entre as equipes.
-2.  **Limite de Sobrecarga:** O sistema garante que, no máximo, **5% do total de funcionários** ultrapasse o limite de sua `carga_horaria_max` (geralmente 40h).
-3.  **Prioridade de Competência:** Se uma skill for crítica e não houver profissionais disponíveis dentro do limite, a alocação pode falhar ou o profissional será adicionado ao pool de 5% de sobrecarga permitida.
+2.  **Limite de Sobrecarga Individual:** O sistema garante que, no máximo, **5% do total de funcionários** ultrapasse o limite de sua `carga_horaria_max` (geralmente 40h).
+3.  **Saúde por Competência:** O esforço total alocado para uma skill específica não pode ultrapassar **105% da capacidade total disponível** para aquela skill na empresa (soma das cargas horárias máximas de todos os profissionais que detêm a skill).
+4.  **Prioridade de Competência:** Se uma skill for crítica e não houver profissionais disponíveis dentro do limite saudável, a alocação é interrompida para aquela vaga, sinalizando a necessidade de contratação ou treinamento (Skill Gap).
 
 Esta regra garante que os dashboards de Analytics mostrem um cenário operacional equilibrado, facilitando a identificação de pontos de atenção reais em vez de ruído nos dados.
 
