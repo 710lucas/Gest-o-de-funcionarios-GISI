@@ -26,7 +26,7 @@ export const aiService = {
       Sua tarefa é responder a perguntas do usuário gerando um plano de execução em JSON.
       O plano deve conter:
       1. "entities": lista de entidades afetadas (ex: ['funcionarios', 'projetos']).
-      2. "queryScript": um bloco de código JavaScript que será executado em uma função que tem acesso direto às variáveis { funcionarios, projetos, alocacoes }. 
+      2. "queryScript": um bloco de código JavaScript que será executado em uma função que recebe um objeto 'context' contendo { funcionarios, projetos, alocacoes }. Você também pode acessar essas variáveis diretamente.
          IMPORTANTE: O script deve retornar um objeto com os datasets, ex: "return { data1: [...], data2: [...] };". Evite envolver em outra função como "(context) => { ... }".
       3. "charts": lista de configurações de gráficos para Recharts.
          Cada objeto em 'charts' DEVE ter: 
@@ -69,15 +69,25 @@ export const aiService = {
         try {
           const fn = new Function(`return ${scriptBody}`)();
           datasets = fn(contextObj);
-        } catch (innerError) {
+        } catch {
           const finalScript = scriptBody.includes('return') ? scriptBody : `return ${scriptBody}`;
-          // Desestruturamos aqui para que a IA possa usar 'funcionarios', 'projetos', etc diretamente
-          const executeQuery = new Function('{ funcionarios, projetos, alocacoes }', finalScript);
+          // Usamos um wrapper IIFE para evitar erros de redeclaração se a IA usar 'const funcionarios'
+          const executeQuery = new Function('context', `
+            const { funcionarios, projetos, alocacoes } = context;
+            {
+              ${finalScript}
+            }
+          `);
           datasets = executeQuery(contextObj);
         }
       } else {
         const finalScript = scriptBody.includes('return') ? scriptBody : `return ${scriptBody}`;
-        const executeQuery = new Function('{ funcionarios, projetos, alocacoes }', finalScript);
+        const executeQuery = new Function('context', `
+          const { funcionarios, projetos, alocacoes } = context;
+          {
+            ${finalScript}
+          }
+        `);
         datasets = executeQuery(contextObj);
       }
 
@@ -262,7 +272,7 @@ export const aiService = {
       {
         "reportTitle": "Título Formal",
         "period": "Referência Temporal",
-        "queryScript": "CÓDIGO JS VÁLIDO. Recebe 'context' { funcionarios, projetos, alocacoes }. Deve retornar um objeto com os datasets mapeados.",
+        "queryScript": "CÓDIGO JS VÁLIDO. Recebe um objeto 'context' contendo { funcionarios, projetos, alocacoes }. Você também pode acessar essas variáveis diretamente. Deve retornar um objeto com os datasets mapeados.",
         "sections": [
           {
             "id": "s1",
@@ -307,15 +317,25 @@ export const aiService = {
         try {
           const fn = new Function(`return ${scriptBody}`)();
           datasets = fn(contextObj);
-        } catch (innerError) {
+        } catch {
           const finalScript = scriptBody.includes('return') ? scriptBody : `return ${scriptBody}`;
-          // Desestruturamos aqui para que a IA possa usar 'funcionarios', 'projetos', etc diretamente
-          const executeQuery = new Function('{ funcionarios, projetos, alocacoes }', finalScript);
+          // Usamos um wrapper IIFE para evitar erros de redeclaração se a IA usar 'const funcionarios'
+          const executeQuery = new Function('context', `
+            const { funcionarios, projetos, alocacoes } = context;
+            {
+              ${finalScript}
+            }
+          `);
           datasets = executeQuery(contextObj);
         }
       } else {
         const finalScript = scriptBody.includes('return') ? scriptBody : `return ${scriptBody}`;
-        const executeQuery = new Function('{ funcionarios, projetos, alocacoes }', finalScript);
+        const executeQuery = new Function('context', `
+          const { funcionarios, projetos, alocacoes } = context;
+          {
+            ${finalScript}
+          }
+        `);
         datasets = executeQuery(contextObj);
       }
     } catch (e) {

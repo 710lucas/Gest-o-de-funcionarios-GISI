@@ -164,6 +164,10 @@ const generateDefaultProjetos = (forceStress = false) => {
 const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) => {
   const alocacoes = [];
   const esforcoOcupado = {};
+  
+  // Determinar o limite de funcionários que podem ser sobrecarregados (5%)
+  const limiteSobrecarregados = Math.floor(funcionarios.length * 0.05);
+  const idsSobrecarregados = new Set();
 
   projetos.forEach(projeto => {
     projeto.requisitos.forEach(req => {
@@ -178,8 +182,21 @@ const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) =
         const esforcoAtual = esforcoOcupado[f.id] || 0;
         const limite = (f.carga_horaria_max || 40);
         
-        if (forceStress && Math.random() > 0.8) return true;
-        return esforcoAtual + req.esforço_por_pessoa <= limite;
+        // Se já está sobrecarregado, só pode continuar se estiver no pool de 5%
+        if (esforcoAtual > limite && !idsSobrecarregados.has(f.id)) return false;
+
+        // Se a nova alocação for sobrecarregar
+        if (esforcoAtual + req.esforço_por_pessoa > limite) {
+          if (forceStress && Math.random() > 0.8) return true;
+          
+          // Verificar se podemos adicionar mais um ao pool de sobrecarregados
+          if (idsSobrecarregados.size < limiteSobrecarregados || idsSobrecarregados.has(f.id)) {
+            return true;
+          }
+          return false;
+        }
+
+        return true;
       });
 
       // Ordenar candidatos por quem tem MENOS esforço atual para distribuir melhor
@@ -190,6 +207,17 @@ const generateDefaultAlocacoes = (funcionarios, projetos, forceStress = false) =
         
         const jaAlocado = alocacoes.some(a => a.funcionarioId == cand.id && a.projetoId == projeto.id);
         if (jaAlocado) continue;
+
+        const esforcoAtual = esforcoOcupado[cand.id] || 0;
+        const limite = (cand.carga_horaria_max || 40);
+
+        // Se for sobrecarregar agora, registra no pool
+        if (esforcoAtual + req.esforço_por_pessoa > limite) {
+          if (idsSobrecarregados.size >= limiteSobrecarregados && !idsSobrecarregados.has(cand.id)) {
+            continue; // Pula para manter o limite de 5%
+          }
+          idsSobrecarregados.add(cand.id);
+        }
 
         alocacoes.push({
           funcionarioId: cand.id,
